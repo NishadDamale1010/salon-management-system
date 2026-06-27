@@ -5,8 +5,8 @@ import {
   Sparkles, ShoppingBag, ChevronLeft, ChevronRight,
   LogOut, History,
 } from "lucide-react";
-import { useState } from "react";
-import { cn, getInitials, getMembershipColor } from "../../utils";
+import { useState, useEffect } from "react";
+import { cn, getInitials, getMembershipColor, subscribeToPushNotifications } from "../../utils";
 import { useAuthStore } from "../../store/authStore";
 import { useLogout } from "../../hooks/useAuth";
 import { SALON_NAME } from "../../constants";
@@ -25,6 +25,12 @@ export default function CustomerLayout() {
   const location = useLocation();
   const user = useAuthStore((s) => s.user);
   const { mutate: logout } = useLogout();
+
+  useEffect(() => {
+    if (user) {
+      subscribeToPushNotifications();
+    }
+  }, [user]);
 
   return (
     <div className="flex min-h-screen bg-[var(--color-surface)] pb-16 md:pb-0">

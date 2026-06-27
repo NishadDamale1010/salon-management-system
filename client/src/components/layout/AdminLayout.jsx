@@ -7,11 +7,11 @@ import {
   Sparkles, ChevronLeft, ChevronRight, LogOut, Wrench,
   ShoppingCart, Menu, X
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "../../utils";
 import { useAuthStore } from "../../store/authStore";
 import { useLogout } from "../../hooks/useAuth";
-import { getInitials } from "../../utils";
+import { getInitials, subscribeToPushNotifications } from "../../utils";
 import { SALON_NAME } from "../../constants";
 
 const navGroups = [
@@ -55,6 +55,12 @@ export default function AdminLayout() {
   const location = useLocation();
   const user = useAuthStore((s) => s.user);
   const { mutate: logout } = useLogout();
+
+  useEffect(() => {
+    if (user) {
+      subscribeToPushNotifications();
+    }
+  }, [user]);
 
   return (
     <div className="flex min-h-screen bg-[var(--color-surface)]">
