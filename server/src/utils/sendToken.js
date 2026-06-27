@@ -11,13 +11,16 @@ const sendToken = (
 
     const token = generateToken(user);
 
+    const isProduction = process.env.NODE_ENV === "production" || 
+                         (process.env.CLIENT_URL && !process.env.CLIENT_URL.includes("localhost"));
+
     const options = {
 
         httpOnly: true,
 
-        secure: process.env.NODE_ENV === "production",
+        secure: isProduction,
 
-        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        sameSite: isProduction ? "none" : "lax",
 
         maxAge:
             30 *

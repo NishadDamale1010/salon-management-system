@@ -54,11 +54,14 @@ exports.googleLogin = asyncHandler(async (req, res) => {
 
 exports.logout = asyncHandler(async (req, res) => {
 
+    const isProduction = process.env.NODE_ENV === "production" || 
+                         (process.env.CLIENT_URL && !process.env.CLIENT_URL.includes("localhost"));
+
     res.cookie("token", "", {
         expires: new Date(Date.now()),
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax",
     });
 
     sendResponse(
