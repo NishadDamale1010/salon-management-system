@@ -605,6 +605,34 @@ function FAQSection({ faqs = [] }) {
 }
 
 // ==================== TROPHIES ====================
+function TrophyCard({ src, index }) {
+  const [error, setError] = useState(false);
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.8, rotateY: 30 }}
+      whileInView={{ opacity: 1, scale: 1, rotateY: 0 }}
+      transition={{ delay: index * 0.1, type: "spring", stiffness: 100 }}
+      viewport={{ once: true, margin: "-50px" }}
+      className="group relative rounded-3xl overflow-hidden aspect-[3/4] border-4 border-yellow-500/20 hover:border-yellow-400 shadow-lg hover:shadow-[0_0_30px_rgba(250,204,21,0.4)] transition-all cursor-pointer"
+    >
+      <div className="absolute inset-0 bg-gradient-to-tr from-white/20 via-transparent to-black/40 z-10 pointer-events-none" />
+      {!error ? (
+        <img
+          src={src}
+          alt={`Trophy ${index + 1}`}
+          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+          onError={() => setError(true)}
+        />
+      ) : (
+        <div className="w-full h-full bg-gradient-to-br from-yellow-900/30 to-[var(--color-surface-2)] flex flex-col items-center justify-center">
+          <span className="text-4xl">🏆</span>
+          <span className="text-xs text-yellow-500/50 mt-2 font-bold uppercase">Add {src.split("/").pop()}</span>
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
 function TrophiesSection() {
   const trophies = [
     "/images/trophy-1.jpg",
@@ -633,33 +661,7 @@ function TrophiesSection() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {trophies.map((src, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, scale: 0.8, rotateY: 30 }}
-            whileInView={{ opacity: 1, scale: 1, rotateY: 0 }}
-            transition={{ delay: i * 0.1, type: "spring", stiffness: 100 }}
-            viewport={{ once: true, margin: "-50px" }}
-            className="group relative rounded-3xl overflow-hidden aspect-[3/4] border-4 border-yellow-500/20 hover:border-yellow-400 shadow-lg hover:shadow-[0_0_30px_rgba(250,204,21,0.4)] transition-all cursor-pointer"
-          >
-            {/* Glass Glare */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-white/20 via-transparent to-black/40 z-10 pointer-events-none" />
-            
-            <img 
-              src={src} 
-              alt={`Trophy ${i + 1}`} 
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
-              onError={(e) => {
-                // Fallback for missing images
-                e.target.style.display = 'none';
-                e.target.parentElement.innerHTML = `
-                  <div class="w-full h-full bg-gradient-to-br from-yellow-900/30 to-[var(--color-surface-2)] flex flex-col items-center justify-center">
-                    <span class="text-4xl">🏆</span>
-                    <span class="text-xs text-yellow-500/50 mt-2 font-bold uppercase">Add ${src.split('/').pop()}</span>
-                  </div>
-                `;
-              }}
-            />
-          </motion.div>
+          <TrophyCard key={i} src={src} index={i} />
         ))}
       </div>
     </section>
