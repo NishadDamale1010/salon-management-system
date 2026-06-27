@@ -6,6 +6,7 @@ const errorMiddleware = require("./src/middleware/errorMiddleware");
 const connectDB = require("./src/config/db");
 
 const authRoutes = require("./src/routes/authRoutes");
+const serviceRoutes = require("./src/routes/serviceRoutes");
 
 dotenv.config();
 
@@ -25,6 +26,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.use("/api/auth", authRoutes);
+app.use("/api/services", serviceRoutes);
 app.get("/", (req, res) => {
     res.status(200).json({
         success: true,
