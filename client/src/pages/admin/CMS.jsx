@@ -3,7 +3,7 @@ import { useState } from "react";
 import { cmsService, uploadService } from "../../services";
 import { QUERY_KEYS } from "../../constants/queryKeys";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Save, Globe, Image, Tag, HelpCircle, Star, Award, Trophy, Settings as SettingsIcon } from "lucide-react";
+import { Plus, Pencil, Trash2, Save, Globe, Image, Tag, HelpCircle, Star, Award, Trophy, Settings as SettingsIcon, X } from "lucide-react";
 import { cn } from "../../utils";
 import { useDropzone } from "react-dropzone";
 
