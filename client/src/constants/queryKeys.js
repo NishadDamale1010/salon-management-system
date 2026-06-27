@@ -31,6 +31,9 @@ export const QUERY_KEYS = {
   // Leaderboard
   LEADERBOARD: ["leaderboard"],
 
+  // Products
+  PRODUCTS: ["products"],
+
   // Admin
   DASHBOARD_STATS: ["admin", "dashboard"],
   DASHBOARD_WIDGETS: ["admin", "widgets"],

@@ -18,7 +18,7 @@ export default function CustomerDashboard() {
   const { data: rewardsData } = useQuery({ queryKey: QUERY_KEYS.REWARDS, queryFn: rewardService.getAll });
   const { data: leaderboardData } = useQuery({ queryKey: ["LEADERBOARD"], queryFn: authService.getLeaderboard });
   const { data: servicesData } = useQuery({ queryKey: QUERY_KEYS.SERVICES, queryFn: serviceService.getAll });
-  const { data: productsData } = useQuery({ queryKey: QUERY_KEYS.PRODUCTS || ["PRODUCTS"], queryFn: inventoryService.getProducts });
+  const { data: productsData } = useQuery({ queryKey: QUERY_KEYS.PRODUCTS, queryFn: inventoryService.getProducts });
 
   const appointments = apptData?.data || [];
   const notifications = notifData?.data || [];
@@ -244,7 +244,9 @@ export default function CustomerDashboard() {
                   <ShoppingBag className="w-5 h-5 text-purple-400" />
                 </div>
                 <h3 className="font-semibold text-sm text-[var(--color-text-primary)] line-clamp-1">{p.name}</h3>
-                <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5">{p.category}</p>
+                <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5">{p.brand || "Salon Product"} · {p.category}{p.size ? ` · ${p.size}` : ""}</p>
+                {p.description && <p className="text-[10px] text-[var(--color-text-secondary)] mt-1 line-clamp-2">{p.description}</p>}
+                {p.keyIngredients?.length > 0 && <p className="text-[10px] text-[var(--color-text-muted)] mt-1 line-clamp-1">{p.keyIngredients.slice(0, 3).join(", ")}</p>}
                 <div className="flex items-center gap-1.5 mt-2">
                   <span className={`w-1.5 h-1.5 rounded-full ${p.stockQuantity > p.lowStockThreshold ? "bg-emerald-400" : p.stockQuantity > 0 ? "bg-yellow-400" : "bg-red-400"}`} />
                   <span className="text-[10px] text-[var(--color-text-muted)]">

@@ -1,11 +1,25 @@
 const Product = require("../models/Product");
+const sscpProducts = require("../data/sscpProducts");
 const StockTransaction = require("../models/StockTransaction");
 const AppError = require("../utils/AppError");
 const notificationService = require("./notificationService");
 const User = require("../models/User"); // To find admin to notify if needed
 const { productSchema, transactionSchema } = require("../validations/inventoryValidation");
 
-exports.getProducts = async () => Product.find().sort("name");
+const ensureSscpProducts = async () => {
+    await Promise.all(sscpProducts.map(product =>
+        Product.updateOne(
+            { sku: product.sku },
+            { $setOnInsert: product },
+            { upsert: true }
+        )
+    ));
+};
+
+exports.getProducts = async () => {
+    await ensureSscpProducts();
+    return Product.find().sort("name");
+};
 
 exports.createProduct = async (data) => {
     const validated = productSchema.parse(data);
