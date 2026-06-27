@@ -13,9 +13,37 @@ const productSchema = new mongoose.Schema(
             unique: true,
             trim: true,
         },
+        brand: {
+            type: String,
+            trim: true,
+            default: "",
+        },
         category: {
             type: String,
             required: [true, "Category is required"],
+        },
+        description: {
+            type: String,
+            trim: true,
+            default: "",
+        },
+        size: {
+            type: String,
+            trim: true,
+            default: "",
+        },
+        keyIngredients: {
+            type: [String],
+            default: [],
+        },
+        benefits: {
+            type: [String],
+            default: [],
+        },
+        imageUrl: {
+            type: String,
+            trim: true,
+            default: "",
         },
         stockQuantity: {
             type: Number,

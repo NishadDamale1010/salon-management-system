@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, History } from "lucide-react";
+import { Plus } from "lucide-react";
 import { inventoryService } from "../../services";
 import { QUERY_KEYS } from "../../constants/queryKeys";
 import { Badge } from "../../components/ui/Badge";
@@ -12,20 +12,29 @@ export default function Inventory() {
   const qc = useQueryClient();
   const [txModal, setTxModal] = useState(null);
   const [createModal, setCreateModal] = useState(false);
-  const [form, setForm] = useState({ name: "", sku: "", category: "", unit: "", stockQuantity: 0, lowStockThreshold: 5 });
+  const emptyProductForm = { name: "", sku: "", brand: "", category: "", description: "", size: "", keyIngredients: "", benefits: "", unit: "", stockQuantity: 0, lowStockThreshold: 5 };
+  const [form, setForm] = useState(emptyProductForm);
   const [tx, setTx] = useState({ type: "Restock", quantity: 1, reason: "" });
 
   const { data, isLoading } = useQuery({ queryKey: QUERY_KEYS.INVENTORY, queryFn: inventoryService.getProducts });
   const products = data?.data || [];
 
-  const { mutate: create } = useMutation({ mutationFn: inventoryService.createProduct, onSuccess: () => { toast.success("Product created!"); qc.invalidateQueries({ queryKey: QUERY_KEYS.INVENTORY }); setCreateModal(false); }, onError: err => toast.error(err.message) });
+  const normalizeProductForm = (data) => ({
+    ...data,
+    stockQuantity: Number(data.stockQuantity),
+    lowStockThreshold: Number(data.lowStockThreshold),
+    keyIngredients: data.keyIngredients.split(",").map(item => item.trim()).filter(Boolean),
+    benefits: data.benefits.split(",").map(item => item.trim()).filter(Boolean),
+  });
+
+  const { mutate: create } = useMutation({ mutationFn: (data) => inventoryService.createProduct(normalizeProductForm(data)), onSuccess: () => { toast.success("Product created!"); qc.invalidateQueries({ queryKey: QUERY_KEYS.INVENTORY }); setCreateModal(false); }, onError: err => toast.error(err.message) });
   const { mutate: logTx } = useMutation({ mutationFn: ({ id, data }) => inventoryService.logTransaction(id, data), onSuccess: () => { toast.success("Stock updated!"); qc.invalidateQueries({ queryKey: QUERY_KEYS.INVENTORY }); setTxModal(null); }, onError: err => toast.error(err.message) });
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div><h1 className="font-display text-2xl font-bold text-[var(--color-text-primary)]">Inventory</h1><p className="text-[var(--color-text-muted)] text-sm">{products.length} products</p></div>
-        <button onClick={() => { setForm({ name: "", sku: "", category: "", unit: "", stockQuantity: 0, lowStockThreshold: 5 }); setCreateModal(true); }} className="flex items-center gap-2 px-5 py-2.5 -white text-sm font-medium rounded-xl transition-all">
+        <button onClick={() => { setForm(emptyProductForm); setCreateModal(true); }} className="flex items-center gap-2 px-5 py-2.5 -white text-sm font-medium rounded-xl transition-all">
           <Plus className="w-4 h-4" /> Add Product
         </button>
       </div>
@@ -45,7 +54,9 @@ export default function Inventory() {
                       <h3 className="font-semibold text-[var(--color-text-primary)]">{p.name}</h3>
                       {isLow && <Badge variant="error">Low Stock!</Badge>}
                     </div>
-                    <p className="text-xs text-[var(--color-text-muted)]">SKU: {p.sku} · {p.category}</p>
+                    <p className="text-xs text-[var(--color-text-muted)]">SKU: {p.sku} · {p.brand || "Salon Product"} · {p.category}{p.size ? ` · ${p.size}` : ""}</p>
+                    {p.description && <p className="text-sm text-[var(--color-text-secondary)] mt-2 max-w-3xl">{p.description}</p>}
+                    {p.keyIngredients?.length > 0 && <p className="text-xs text-[var(--color-text-muted)] mt-2">Key ingredients: {p.keyIngredients.join(", ")}</p>}
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="text-right">
@@ -99,7 +110,12 @@ export default function Inventory() {
           {[
             { key: "name", label: "Product Name", placeholder: "Shampoo Premium" },
             { key: "sku", label: "SKU", placeholder: "SHMP-001" },
+            { key: "brand", label: "Brand", placeholder: "SSCP Herbals" },
             { key: "category", label: "Category", placeholder: "Hair Care" },
+            { key: "description", label: "Description", placeholder: "Short product description" },
+            { key: "size", label: "Size", placeholder: "200 ml" },
+            { key: "keyIngredients", label: "Key Ingredients", placeholder: "Aloe Vera, Neem, Tea Tree" },
+            { key: "benefits", label: "Benefits", placeholder: "Paraben free, pH balanced" },
             { key: "unit", label: "Unit", placeholder: "bottles" },
             { key: "stockQuantity", label: "Initial Stock", type: "number", placeholder: "20" },
             { key: "lowStockThreshold", label: "Low Stock Alert At", type: "number", placeholder: "5" },
