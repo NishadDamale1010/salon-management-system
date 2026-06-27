@@ -5,9 +5,14 @@ export const useAuthStore = create(
   persist(
     (set) => ({
       user: null,
+      token: null,
       isAuthenticated: false,
-      setUser: (user) => set({ user, isAuthenticated: !!user }),
-      logout: () => set({ user: null, isAuthenticated: false }),
+      setUser: (user, token) => set((state) => ({ 
+        user, 
+        isAuthenticated: !!user, 
+        token: token || state.token 
+      })),
+      logout: () => set({ user: null, token: null, isAuthenticated: false }),
     }),
     { name: "gayatri-auth" }
   )

@@ -29,7 +29,7 @@ export const useLogin = () => {
   return useMutation({
     mutationFn: authService.login,
     onSuccess: (res) => {
-      setUser(res.data);
+      setUser(res.data?.user || res.data, res.data?.token);
       qc.invalidateQueries({ queryKey: QUERY_KEYS.ME });
       toast.success("Welcome back! ✨");
     },
@@ -43,7 +43,7 @@ export const useGoogleLogin = () => {
   return useMutation({
     mutationFn: authService.googleLogin,
     onSuccess: (res) => {
-      setUser(res.data);
+      setUser(res.data?.user || res.data, res.data?.token);
       qc.invalidateQueries({ queryKey: QUERY_KEYS.ME });
       toast.success("Welcome back with Google! ✨");
     },

@@ -8,7 +8,12 @@ const asyncHandler = require("../utils/asyncHandler");
 
 const protect = asyncHandler(async (req, res, next) => {
 
-    const token = req.cookies.token;
+    let token = req.cookies.token;
+
+    // Also check Authorization header for cross-domain (Vercel <-> Render)
+    if (!token && req.headers.authorization?.startsWith("Bearer")) {
+        token = req.headers.authorization.split(" ")[1];
+    }
 
     if (!token) {
         throw new AppError("Please login first", 401);
