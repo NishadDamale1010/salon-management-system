@@ -9,9 +9,10 @@ const {
     getProductHistory,
 } = require("../controllers/inventoryController");
 
-// Logged-in users can view the product catalog; stock changes stay admin-only.
-router.use(protect);
+// Public route to view product catalog
 router.get("/", getProducts);
+
+router.use(protect);
 
 router.use(authorize("admin"));
 router.post("/", createProduct);

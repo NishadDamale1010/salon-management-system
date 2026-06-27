@@ -3,10 +3,10 @@ import { motion, useScroll, useTransform, AnimatePresence, useInView } from "fra
 import { Link } from "react-router-dom";
 import {
   Sparkles, ArrowRight, MessageCircle, Star, CheckCircle,
-  ChevronDown, Clock, Award, Users, Shield, Plus, Minus, Camera,
+  ChevronDown, Clock, Award, Users, Shield, Plus, Minus, Camera, Package, ShoppingBag
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { cmsService, serviceService } from "../../services";
+import { cmsService, serviceService, inventoryService } from "../../services";
 import { QUERY_KEYS } from "../../constants/queryKeys";
 import { SALON_NAME, SALON_TAGLINE, SALON_WHATSAPP, SALON_INSTAGRAM } from "../../constants";
 import { formatCurrency } from "../../utils";
@@ -46,6 +46,10 @@ function CountUp({ end, suffix = "", duration = 2000 }) {
 function HeroSection({ settings }) {
   const hero = settings?.hero || {};
   const [currentBg, setCurrentBg] = useState(0);
+  const { scrollY } = useScroll();
+  const y1 = useTransform(scrollY, [0, 1000], [0, 400]);
+  const y2 = useTransform(scrollY, [0, 1000], [0, -200]);
+  const opacity = useTransform(scrollY, [0, 500], [1, 0]);
   
   // Magical background images
   const backgrounds = [
@@ -57,69 +61,69 @@ function HeroSection({ settings }) {
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentBg((prev) => (prev + 1) % backgrounds.length);
-    }, 5000);
+    }, 6000);
     return () => clearInterval(timer);
   }, [backgrounds.length]);
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[var(--color-surface)]">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-black perspective-[1000px]">
       
-      {/* Full-Screen Background Slider */}
-      <div className="absolute inset-0 z-0">
+      {/* Full-Screen Background Slider with Parallax */}
+      <motion.div className="absolute inset-0 z-0" style={{ y: y1 }}>
         <AnimatePresence mode="popLayout">
           <motion.img
             key={currentBg}
             src={backgrounds[currentBg]}
             alt="Hero Background"
-            initial={{ opacity: 0, scale: 1.05 }}
+            initial={{ opacity: 0, scale: 1.1 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 2, ease: "easeInOut" }}
+            transition={{ duration: 2.5, ease: "easeInOut" }}
             className="absolute inset-0 w-full h-full object-cover object-top sm:object-center"
-            onError={(e) => {
-              // Fallback gradient if images are not found
-              e.target.style.display = 'none';
-            }}
+            onError={(e) => { e.target.style.display = 'none'; }}
           />
         </AnimatePresence>
         
-        {/* Heavy Magical Overlay Gradients to ensure text readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-purple-950/60 via-[var(--color-rose-950)]/60 to-[var(--color-surface)]" />
-        <div className="absolute inset-0 bg-black/40" />
-      </div>
+        {/* Deep Premium Overlays */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-black/90" />
+        <div className="absolute inset-0 bg-gradient-to-tr from-[var(--color-rose-950)]/40 to-transparent" />
+      </motion.div>
 
       {/* Floating Sparkles & Orbs */}
-      <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-[var(--color-rose-500)]/30 rounded-full blur-[120px] animate-float pointer-events-none z-0" />
-      <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-yellow-500/20 rounded-full blur-[120px] animate-float pointer-events-none z-0" style={{ animationDelay: "2s" }} />
+      <motion.div style={{ y: y2 }} className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-[var(--color-rose-500)]/20 rounded-full blur-[140px] animate-float pointer-events-none z-0" />
+      <motion.div style={{ y: y2 }} className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-yellow-500/10 rounded-full blur-[120px] animate-float pointer-events-none z-0" style={{ animationDelay: "2s" }} />
 
-      {/* Content (Centered) */}
-      <div className="relative z-10 text-center px-4 max-w-4xl mx-auto pt-20">
+      {/* Content */}
+      <motion.div 
+        style={{ opacity }}
+        className="relative z-10 text-center px-4 max-w-5xl mx-auto pt-20 flex flex-col items-center"
+      >
         <motion.div
-          initial={{ opacity: 0, y: -20, scale: 0.9 }}
+          initial={{ opacity: 0, y: -30, scale: 0.8 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-black/90 text-white border border-black/50 text-sm font-bold mb-8 shadow-lg backdrop-blur-md"
+          transition={{ duration: 1, ease: "easeOut" }}
+          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-white/5 border border-white/10 text-[var(--color-rose-200)] text-sm font-medium tracking-widest uppercase mb-10 backdrop-blur-md shadow-[0_0_40px_rgba(244,63,94,0.1)]"
         >
-          <Sparkles className="w-4 h-4 text-white" />
+          <Sparkles className="w-4 h-4 text-yellow-400" />
           Award-Winning Beauty Studio
         </motion.div>
 
         <motion.h1
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.8 }}
-          className="font-display text-5xl sm:text-6xl md:text-8xl font-bold text-white mb-6 leading-tight drop-shadow-2xl"
+          transition={{ delay: 0.3, duration: 1 }}
+          className="font-display text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black text-white mb-6 leading-[1.1] tracking-tight drop-shadow-2xl"
         >
           {hero.title || (
             <>
               Beauty That{" "}
-              <span className="relative inline-block text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-yellow-400 to-amber-500 drop-shadow-[0_0_30px_rgba(250,204,21,0.4)]">
+              <span className="relative inline-block text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-yellow-100 to-amber-500 drop-shadow-[0_0_40px_rgba(250,204,21,0.3)]">
                 Glows
                 <motion.span 
-                  animate={{ rotate: 360 }} transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-                  className="absolute -top-6 -right-8 text-yellow-400 opacity-50"
+                  animate={{ rotate: 360 }} transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+                  className="absolute -top-6 -right-10 text-yellow-400 opacity-60"
                 >
-                  <Sparkles className="w-8 h-8" />
+                  <Sparkles className="w-10 h-10" />
                 </motion.span>
               </span>
               <br />From Within
@@ -128,47 +132,55 @@ function HeroSection({ settings }) {
         </motion.h1>
 
         <motion.p
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.8 }}
-          className="text-gray-200 text-lg sm:text-2xl mb-12 max-w-2xl mx-auto drop-shadow-lg font-medium"
+          transition={{ delay: 0.5, duration: 1 }}
+          className="text-gray-300 text-lg sm:text-2xl mb-14 max-w-3xl mx-auto drop-shadow-lg font-light tracking-wide leading-relaxed"
         >
           {hero.subtitle || SALON_TAGLINE}
         </motion.p>
 
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6, duration: 0.8 }}
-          className="flex flex-col sm:flex-row gap-5 justify-center"
+          transition={{ delay: 0.7, duration: 1 }}
+          className="flex flex-col sm:flex-row gap-6 justify-center w-full sm:w-auto"
         >
           <Link
             to="/register"
-            className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-yellow-400 to-amber-500 text-amber-950 font-bold rounded-2xl text-lg transition-all hover:shadow-[0_0_30px_rgba(250,204,21,0.6)] hover:-translate-y-1 hover:scale-105"
+            className="group relative inline-flex items-center justify-center gap-3 px-10 py-5 bg-gradient-to-r from-[var(--color-rose-500)] to-purple-600 text-white font-bold rounded-2xl text-lg transition-all hover:shadow-[0_0_40px_rgba(244,63,94,0.5)] hover:-translate-y-1 overflow-hidden"
           >
-            {hero.primaryButtonText || "Book Your Session"}
-            <ArrowRight className="w-5 h-5" />
+            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
+            <span className="relative z-10">{hero.primaryButtonText || "Book Your Session"}</span>
+            <ArrowRight className="w-5 h-5 relative z-10 group-hover:translate-x-1 transition-transform" />
           </Link>
           <a
             href={SALON_INSTAGRAM}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 px-8 py-4 glass border border-white/30 text-white font-bold rounded-2xl text-lg transition-all hover:bg-white/10 hover:border-white/60 hover:-translate-y-1 hover:shadow-xl backdrop-blur-md"
+            className="inline-flex items-center justify-center gap-3 px-10 py-5 bg-white/5 border border-white/20 text-white font-medium rounded-2xl text-lg transition-all hover:bg-white/10 hover:border-white/40 hover:-translate-y-1 hover:shadow-2xl backdrop-blur-xl"
           >
             <Camera className="w-5 h-5 text-pink-400" />
-            Instagram
+            Explore Gallery
           </a>
         </motion.div>
-      </div>
+      </motion.div>
       
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 1.2, duration: 1 }}
-        className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10"
+        transition={{ delay: 1.5, duration: 1 }}
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10"
       >
-        <ChevronDown className="w-8 h-8 text-white/50 animate-bounce" />
+        <ChevronDown className="w-10 h-10 text-white/30 animate-bounce" />
       </motion.div>
+      
+      {/* Wave divider */}
+      <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-none z-10 text-[var(--color-surface)]">
+        <svg viewBox="0 0 1200 120" preserveAspectRatio="none" className="relative block w-full h-[60px] md:h-[100px]">
+          <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V120H0V95.8C59.71,118,152.47,143.22,229.4,130.89,261.27,125.82,292.1,108.6,321.39,56.44Z" fill="currentColor"></path>
+        </svg>
+      </div>
     </section>
   );
 }
@@ -286,6 +298,96 @@ function ServicesSection({ services = [] }) {
       >
         <Link to="/services" className="inline-flex items-center gap-2 text-[var(--color-rose-500)] hover:text-[var(--color-rose-400)] font-bold text-base transition-colors group">
           View All Services 
+          <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+        </Link>
+      </motion.div>
+    </section>
+  );
+}
+
+// ==================== FEATURED PRODUCTS ====================
+function FeaturedProductsSection({ products = [] }) {
+  if (!products.length) return null;
+  
+  // Show top 4 products
+  const featured = products.slice(0, 4);
+
+  return (
+    <section className="py-24 px-4 max-w-7xl mx-auto relative">
+      <div className="text-center mb-16">
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-yellow-500 text-sm font-bold tracking-[0.2em] uppercase mb-4"
+        >Our Store</motion.p>
+        <motion.h2
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.1 }}
+          className="font-display text-4xl md:text-5xl font-bold text-[var(--color-text-primary)]"
+        >
+          Premium <span className="text-gradient-gold">Products</span>
+        </motion.h2>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {featured.map((p, i) => (
+          <motion.div
+            key={p._id}
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.1, duration: 0.5 }}
+            viewport={{ once: true, margin: "-50px" }}
+            whileHover={{ y: -10 }}
+            className="group rounded-3xl bg-[var(--color-surface-card)] border border-[var(--color-border)] p-5 hover:border-yellow-400 hover:shadow-[0_20px_40px_-15px_rgba(250,204,21,0.15)] transition-all overflow-hidden relative flex flex-col"
+          >
+            <div className="absolute inset-0 bg-gradient-to-tr from-yellow-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            
+            <div className="relative w-full h-48 mb-5 bg-[var(--color-surface)] rounded-2xl overflow-hidden flex items-center justify-center p-2">
+              {p.image || p.imageUrl ? (
+                <img src={p.image || p.imageUrl} alt={p.name} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700 mix-blend-multiply dark:mix-blend-normal" />
+              ) : (
+                <Package className="w-12 h-12 text-yellow-500/20" />
+              )}
+              {p.discount > 0 && (
+                <div className="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-lg shadow-sm">
+                  {p.discount}% OFF
+                </div>
+              )}
+            </div>
+
+            <div className="relative z-10 flex flex-col flex-1">
+              <p className="text-[10px] font-bold text-yellow-500 uppercase tracking-wider mb-1">{p.brand || "Salon Product"}</p>
+              <h3 className="font-display font-bold text-[var(--color-text-primary)] text-lg mb-2 line-clamp-2 leading-tight">{p.name}</h3>
+              <p className="text-xs text-[var(--color-text-muted)] mb-4 line-clamp-2 flex-1">{p.description}</p>
+              
+              <div className="flex items-center justify-between pt-4 border-t border-[var(--color-border)]">
+                <div className="flex flex-col">
+                  {p.originalPrice && (
+                    <span className="text-[10px] text-[var(--color-text-muted)] line-through">{formatCurrency(p.originalPrice)}</span>
+                  )}
+                  <span className="text-yellow-600 font-black text-lg">{formatCurrency(p.price)}</span>
+                </div>
+                <Link
+                  to="/products"
+                  className="w-10 h-10 rounded-full bg-yellow-500 text-yellow-950 flex items-center justify-center hover:scale-110 hover:shadow-lg transition-transform"
+                >
+                  <ShoppingBag className="w-4 h-4" />
+                </Link>
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+      
+      <motion.div 
+        initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
+        className="text-center mt-12"
+      >
+        <Link to="/products" className="inline-flex items-center gap-2 text-yellow-500 hover:text-yellow-400 font-bold text-base transition-colors group">
+          Shop All Products
           <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
         </Link>
       </motion.div>
@@ -668,6 +770,70 @@ function TrophiesSection() {
   );
 }
 
+// ==================== CALL TO ACTION ====================
+function CTASection() {
+  return (
+    <section className="relative py-32 overflow-hidden bg-black">
+      <div className="absolute inset-0 z-0">
+        <img
+          src="/images/gallery-2.jpg"
+          alt="CTA Background"
+          className="w-full h-full object-cover opacity-40 mix-blend-luminosity"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[var(--color-rose-950)]/80 to-transparent" />
+      </div>
+
+      <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-yellow-400 to-amber-600 mb-8 shadow-[0_0_50px_rgba(250,204,21,0.5)]"
+        >
+          <Sparkles className="w-10 h-10 text-white" />
+        </motion.div>
+        
+        <motion.h2
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.2 }}
+          className="font-display text-5xl md:text-7xl font-black text-white mb-6 leading-tight drop-shadow-2xl"
+        >
+          Ready to experience the <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-amber-500">Magic?</span>
+        </motion.h2>
+        
+        <motion.p
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.3 }}
+          className="text-gray-300 text-xl max-w-2xl mx-auto mb-12"
+        >
+          Book your session today and step into a world of premium beauty and relaxation.
+        </motion.p>
+        
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.4 }}
+        >
+          <Link
+            to="/register"
+            className="group relative inline-flex items-center justify-center gap-3 px-12 py-6 bg-white text-black font-black rounded-full text-xl transition-all hover:shadow-[0_0_40px_rgba(255,255,255,0.4)] hover:scale-105 overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-yellow-300 to-amber-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <span className="relative z-10 group-hover:text-white transition-colors duration-500">Book Appointment</span>
+            <ArrowRight className="w-6 h-6 relative z-10 group-hover:text-white group-hover:translate-x-2 transition-all duration-500" />
+          </Link>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
 // ==================== MAIN HOME ====================
 export default function Home() {
   const { data: settingsRes } = useQuery({
@@ -694,6 +860,11 @@ export default function Home() {
     queryKey: QUERY_KEYS.FAQS,
     queryFn: cmsService.getFAQs,
   });
+  // Fetch Products
+  const { data: productsRes } = useQuery({
+    queryKey: ["products"],
+    queryFn: () => inventoryService.getProducts({}),
+  });
 
   const settings = settingsRes?.data;
   const services = servicesRes?.data || [];
@@ -701,18 +872,21 @@ export default function Home() {
   const offers = offersRes?.data || [];
   const testimonials = testimonialRes?.data || [];
   const faqs = faqRes?.data || [];
+  const products = productsRes?.data?.products || [];
 
   return (
     <div className="overflow-x-hidden">
       <HeroSection settings={settings} />
       <StatsSection />
       <ServicesSection services={services} />
+      <FeaturedProductsSection products={products} />
       <WhyUsSection />
       <GallerySection gallery={gallery} />
       <OffersSection offers={offers} />
       <TestimonialsSection testimonials={testimonials} />
       <FAQSection faqs={faqs} />
       <TrophiesSection />
+      <CTASection />
 
       {/* WhatsApp Float Button */}
       <motion.a
