@@ -56,7 +56,7 @@ exports.createNotification = async (userId, type, title, message) => {
                 url: "/dashboard"
             });
 
-            // Send push to all subscriptions concurrently
+            // Send push to all subscriptions concurrently (Fire and forget to avoid blocking)
             const pushPromises = user.pushSubscriptions.map(sub => 
                 webpush.sendNotification(sub, payload).catch(err => {
                     console.error("Push notification failed for a subscription:", err);
@@ -64,7 +64,7 @@ exports.createNotification = async (userId, type, title, message) => {
                 })
             );
 
-            await Promise.all(pushPromises);
+            Promise.all(pushPromises).catch(err => console.error("Error in push promises:", err));
         }
     } catch (error) {
         console.error("Error sending web push notification:", error);

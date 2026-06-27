@@ -58,22 +58,22 @@ const bookAppointment = async (userId, appointmentData) => {
     });
 
     // Notify Customer
-    await notificationService.createNotification(
+    notificationService.createNotification(
         userId,
         "Appointment",
         "Booking Requested 📅",
         `Your appointment request for ${appointmentDate} at ${appointmentTime} has been received and is pending confirmation.`
-    );
+    ).catch(console.error);
 
     // Notify Admins
     const admins = await User.find({ role: "admin" });
     for (const admin of admins) {
-        await notificationService.createNotification(
+        notificationService.createNotification(
             admin._id,
             "Appointment",
             "New Booking Request 🛎️",
             `A new appointment has been requested for ${appointmentDate} at ${appointmentTime}.`
-        );
+        ).catch(console.error);
     }
 
     return appointment;
@@ -167,12 +167,12 @@ const updateAppointmentStatus = async (appointmentId, updateData) => {
             const message = `Hello Queen, your pampering session is confirmed! Your appointment for ${appointment.services.map(s => s.serviceName).join(", ")} on ${new Date(appointment.appointmentDate).toDateString()} at ${appointment.appointmentTime} is confirmed. Enjoy your self-care time, gorgeous! ✨ Here is your Appointment Card!`;
             
             // Appointment Card Notification
-            await notificationService.createNotification(appointment.customer._id, "Appointment", title, message);
+            notificationService.createNotification(appointment.customer._id, "Appointment", title, message).catch(console.error);
             
             // Send Email
             if (appointment.customer.email) {
                 const html = `<h2>${title}</h2><p>Hi ${appointment.customer.firstName},</p><p>${message}</p><p>Thank you for choosing Gayatri Beauty Studio!</p>`;
-                await emailService.sendEmail(appointment.customer.email, title, html);
+                emailService.sendEmail(appointment.customer.email, title, html).catch(console.error);
             }
         } else if (status === "Cancelled" || status === "Rejected" || status === "Payment Failed") {
             const title = "Appointment Rejected 😞";
@@ -184,17 +184,17 @@ const updateAppointmentStatus = async (appointmentId, updateData) => {
             const message = `Sorry, your appointment on ${new Date(appointment.appointmentDate).toDateString()} at ${appointment.appointmentTime} was declined.${reasonText}${rescheduleText}`;
             
             // Sorry Card Notification
-            await notificationService.createNotification(appointment.customer._id, "Appointment", title, message);
+            notificationService.createNotification(appointment.customer._id, "Appointment", title, message).catch(console.error);
             
             // Send Email
             if (appointment.customer.email) {
                 const html = `<h2>${title}</h2><p>Hi ${appointment.customer.firstName},</p><p>${message}</p>`;
-                await emailService.sendEmail(appointment.customer.email, title, html);
+                emailService.sendEmail(appointment.customer.email, title, html).catch(console.error);
             }
         }
     } else if (appointment.status === "Confirmed" && paymentStatus === "Paid" && previousPaymentStatus === "Verification Pending") {
         // Just send payment verified notification if status was already confirmed somehow
-        await notificationService.createNotification(appointment.customer._id, "Payment Verified", "Payment Verified ✅", "Your manual UPI payment has been successfully verified. Your appointment is confirmed.");
+        notificationService.createNotification(appointment.customer._id, "Payment Verified", "Payment Verified ✅", "Your manual UPI payment has been successfully verified. Your appointment is confirmed.").catch(console.error);
     }
 
     // Loyalty Engine logic: Automatically award points when status changes to Completed for the first time
