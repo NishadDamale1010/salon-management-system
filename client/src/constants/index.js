@@ -1,6 +1,6 @@
 export const SALON_NAME = "Gayatri Beauty Studio";
 export const SALON_TAGLINE = "Your Beauty, Our Passion";
-export const SALON_WHATSAPP = import.meta.env.VITE_WHATSAPP_NUMBER || "8830383499";
+export const SALON_WHATSAPP = import.meta.env.VITE_WHATSAPP_NUMBER || "918830383499";
 export const SALON_INSTAGRAM = import.meta.env.VITE_INSTAGRAM_URL || "https://www.instagram.com/bharti_damale?igsh=YzljYTk1ODg3Zg==";
 export const SALON_FACEBOOK = import.meta.env.VITE_FACEBOOK_URL || "#";
 

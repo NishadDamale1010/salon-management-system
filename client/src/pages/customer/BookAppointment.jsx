@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle, Sparkles, Clock, Check, ChevronRight, Calendar as CalIcon, CreditCard, Upload } from "lucide-react";
 import { serviceService, appointmentService, uploadService } from "../../services";
 import { QUERY_KEYS } from "../../constants/queryKeys";
@@ -13,6 +13,9 @@ const TIME_SLOTS = ["09:00 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", 
 
 export default function BookAppointment() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const serviceIdParam = searchParams.get("service");
+  
   const [step, setStep] = useState(0);
   const [selectedServices, setSelectedServices] = useState([]);
   const [date, setDate] = useState("");
@@ -33,6 +36,15 @@ export default function BookAppointment() {
 
   const { data } = useQuery({ queryKey: QUERY_KEYS.SERVICES, queryFn: serviceService.getAll });
   const services = data?.data || [];
+
+  useEffect(() => {
+    if (serviceIdParam && services.length > 0 && selectedServices.length === 0) {
+      const matched = services.find(s => s._id === serviceIdParam);
+      if (matched) {
+        setSelectedServices([matched]);
+      }
+    }
+  }, [services, serviceIdParam]);
 
   const { mutate: book, isPending } = useMutation({
     mutationFn: appointmentService.book,

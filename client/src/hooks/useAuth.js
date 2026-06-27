@@ -9,9 +9,14 @@ export const useMe = () => {
   return useQuery({
     queryKey: QUERY_KEYS.ME,
     queryFn: async () => {
-      const res = await authService.getMe();
-      setUser(res.data);
-      return res.data;
+      try {
+        const res = await authService.getMe();
+        setUser(res.data);
+        return res.data;
+      } catch (err) {
+        setUser(null);
+        throw err;
+      }
     },
     retry: false,
     staleTime: 5 * 60 * 1000,

@@ -23,7 +23,7 @@ export default function Login() {
   const user = useAuthStore((s) => s.user);
   const navigate = useNavigate();
   const location = useLocation();
-  const from = location.state?.from?.pathname || (user?.role === "admin" ? "/admin" : "/dashboard");
+  const from = location.state?.from ? (location.state.from.pathname + (location.state.from.search || "")) : (user?.role === "admin" ? "/admin" : "/dashboard");
 
   const { register, handleSubmit, formState: { errors } } = useForm({ resolver: zodResolver(schema) });
 

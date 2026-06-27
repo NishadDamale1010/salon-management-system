@@ -3,13 +3,14 @@ import { motion, useScroll, useTransform, AnimatePresence, useInView } from "fra
 import { Link } from "react-router-dom";
 import {
   Sparkles, ArrowRight, MessageCircle, Star, CheckCircle,
-  ChevronDown, Clock, Award, Users, Shield, Plus, Minus,
+  ChevronDown, Clock, Award, Users, Shield, Plus, Minus, Instagram,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { cmsService, serviceService } from "../../services";
 import { QUERY_KEYS } from "../../constants/queryKeys";
-import { SALON_NAME, SALON_TAGLINE, SALON_WHATSAPP } from "../../constants";
+import { SALON_NAME, SALON_TAGLINE, SALON_WHATSAPP, SALON_INSTAGRAM } from "../../constants";
 import { formatCurrency } from "../../utils";
+import AIConsultant from "../../components/ai/AIConsultant";
 
 // ==================== NUMBER COUNTER ====================
 function CountUp({ end, suffix = "", duration = 2000 }) {
@@ -97,9 +98,9 @@ function HeroSection({ settings }) {
           initial={{ opacity: 0, y: -20, scale: 0.9 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full glass border border-yellow-400/50 text-yellow-300 text-sm font-bold mb-8 shadow-[0_0_20px_rgba(250,204,21,0.3)] backdrop-blur-md"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-black/90 text-white border border-black/50 text-sm font-bold mb-8 shadow-lg backdrop-blur-md"
         >
-          <Sparkles className="w-4 h-4 text-yellow-400" />
+          <Sparkles className="w-4 h-4 text-white" />
           Award-Winning Beauty Studio
         </motion.div>
 
@@ -149,13 +150,13 @@ function HeroSection({ settings }) {
             <ArrowRight className="w-5 h-5" />
           </Link>
           <a
-            href={`https://wa.me/${SALON_WHATSAPP}`}
+            href={SALON_INSTAGRAM}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center gap-2 px-8 py-4 glass border border-white/30 text-white font-bold rounded-2xl text-lg transition-all hover:bg-white/10 hover:border-white/60 hover:-translate-y-1 hover:shadow-xl backdrop-blur-md"
           >
-            <MessageCircle className="w-5 h-5 text-green-400" />
-            WhatsApp Us
+            <Instagram className="w-5 h-5 text-pink-400" />
+            Instagram
           </a>
         </motion.div>
       </div>
@@ -720,11 +721,14 @@ export default function Home() {
         href={`https://wa.me/${SALON_WHATSAPP}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 z-[60] w-16 h-16 bg-gradient-to-tr from-green-600 to-green-400 rounded-full flex items-center justify-center shadow-[0_10px_30px_rgba(34,197,94,0.4)] transition-all"
+        className="fixed bottom-6 right-24 z-[60] w-16 h-16 bg-gradient-to-tr from-green-600 to-green-400 rounded-full flex items-center justify-center shadow-[0_10px_30px_rgba(34,197,94,0.4)] transition-all"
         aria-label="WhatsApp"
       >
         <MessageCircle className="w-8 h-8 text-white" />
       </motion.a>
+
+      {/* Floating AI Beauty Consultant */}
+      <AIConsultant />
     </div>
   );
 }

@@ -57,6 +57,8 @@ exports.logout = asyncHandler(async (req, res) => {
     res.cookie("token", "", {
         expires: new Date(Date.now()),
         httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     });
 
     sendResponse(
