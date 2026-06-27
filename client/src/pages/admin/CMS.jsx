@@ -3,7 +3,7 @@ import { useState } from "react";
 import { cmsService, uploadService } from "../../services";
 import { QUERY_KEYS } from "../../constants/queryKeys";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Save, Globe, Image, Tag, HelpCircle, Star, Award, Trophy, Settings as SettingsIcon } from "lucide-react";
+import { Plus, Trash2, Save, Image, Tag, HelpCircle, Star, Award, Trophy, Settings as SettingsIcon, X } from "lucide-react";
 import { cn } from "../../utils";
 import { useDropzone } from "react-dropzone";
 
@@ -104,62 +104,84 @@ function SimpleListSection({ queryKey, fetchFn, createFn, deleteFn, fields, titl
   const items = data?.data || [];
   const [form, setForm] = useState(() => Object.fromEntries(fields.map(f => [f.key, f.type === 'dropzone' ? [] : (f.options ? f.options[0] : "")])));
   const [uploading, setUploading] = useState(false);
+  const resetForm = () => setForm(Object.fromEntries(fields.map(f => [f.key, f.type === 'dropzone' ? [] : (f.options ? f.options[0] : "")])));
 
-  const { mutate: create, isPending } = useMutation({ mutationFn: createFn, onSuccess: () => { toast.success("Created!"); qc.invalidateQueries({ queryKey }); setForm(Object.fromEntries(fields.map(f => [f.key, f.type === 'dropzone' ? [] : (f.options ? f.options[0] : "")]))); }, onError: err => toast.error(err.message) });
+  const { mutate: create, isPending } = useMutation({ mutationFn: createFn, onSuccess: () => { toast.success("Created!"); qc.invalidateQueries({ queryKey }); resetForm(); }, onError: err => toast.error(err.message) });
   const { mutate: del } = useMutation({ mutationFn: deleteFn, onSuccess: () => { toast.success("Deleted!"); qc.invalidateQueries({ queryKey }); }, onError: err => toast.error(err.message) });
 
   const handleImageUpload = async (e, key, multiple = false) => {
-    const files = e.target ? Array.from(e.target.files) : Array.from(e);
+    const input = e.target;
+    const files = input ? Array.from(input.files || []) : Array.from(e);
     if (!files.length) return;
+
+    const imageFiles = files.filter(file => file.type.startsWith("image/"));
+    if (imageFiles.length !== files.length) {
+      toast.error("Only image files can be uploaded");
+    }
+    if (!imageFiles.length) return;
+
     setUploading(true);
     try {
       if (multiple) {
-        const urls = await Promise.all(files.map(f => uploadService.uploadImage(f).then(res => res.data.url)));
-        setForm(f => ({ ...f, [key]: [...(f[key] || []), ...urls] }));
+        const uploads = await Promise.allSettled(imageFiles.map(file => uploadService.uploadImage(file).then(res => res.data.url)));
+        const urls = uploads.filter(result => result.status === "fulfilled").map(result => result.value);
+        if (urls.length) setForm(f => ({ ...f, [key]: [...(Array.isArray(f[key]) ? f[key] : []), ...urls] }));
+        if (uploads.some(result => result.status === "rejected")) toast.error("Some images failed to upload");
+        if (urls.length) toast.success(`${urls.length} image${urls.length === 1 ? "" : "s"} uploaded`);
       } else {
-        const res = await uploadService.uploadImage(files[0]);
+        const res = await uploadService.uploadImage(imageFiles[0]);
         setForm(f => ({ ...f, [key]: res.data.url }));
+        toast.success("Image uploaded");
       }
-      toast.success("Uploaded!");
     } catch {
       toast.error("Upload failed");
     } finally {
       setUploading(false);
+      if (input) input.value = "";
     }
   };
 
+  const normalizePayload = (payload) => Object.fromEntries(Object.entries(payload).map(([key, value]) => {
+    const field = fields.find(item => item.key === key);
+    if (field?.type === "number") return [key, Number(value)];
+    if (typeof value === "string") return [key, value.trim()];
+    return [key, value];
+  }));
+
   const handleCreate = async () => {
-    // If the form contains an array for a field (meaning multiple items like gallery images),
-    // we should create a record for each image.
-    const arrayFields = Object.entries(form).filter(([k, v]) => Array.isArray(v));
-    
+    const missingField = fields.find(field => {
+      if (field.required === false) return false;
+      const value = form[field.key];
+      return Array.isArray(value) ? value.length === 0 : !String(value || "").trim();
+    });
+
+    if (missingField) {
+      toast.error(`Please provide ${missingField.label.toLowerCase()}`);
+      return;
+    }
+
+    const arrayFields = Object.entries(form).filter(([, value]) => Array.isArray(value));
+
     if (arrayFields.length > 0) {
-      // Find the first array field (e.g., 'image')
       const [arrayKey, arrayValues] = arrayFields[0];
-      if (arrayValues.length === 0) {
-        toast.error(`Please provide at least one ${arrayKey}`);
-        return;
-      }
-      
       setUploading(true);
       try {
-        // Create an entry for each image in the array using the other form fields
-        await Promise.all(arrayValues.map(val => {
-          const payload = { ...form, [arrayKey]: val };
-          return new Promise((resolve, reject) => {
-            createFn(payload).then(resolve).catch(reject);
-          });
-        }));
-        toast.success("All items created!");
-        qc.invalidateQueries({ queryKey });
-        setForm(Object.fromEntries(fields.map(f => [f.key, f.type === 'dropzone' ? [] : (f.options ? f.options[0] : "")])));
-      } catch (err) {
-        toast.error("Failed to create some items");
+        const results = await Promise.allSettled(arrayValues.map(value => createFn(normalizePayload({ ...form, [arrayKey]: value }))));
+        const createdCount = results.filter(result => result.status === "fulfilled").length;
+
+        if (createdCount) {
+          toast.success(`${createdCount} ${title.toLowerCase()} item${createdCount === 1 ? "" : "s"} created`);
+          qc.invalidateQueries({ queryKey });
+          resetForm();
+        }
+        if (createdCount !== arrayValues.length) toast.error(`${arrayValues.length - createdCount} item${arrayValues.length - createdCount === 1 ? "" : "s"} failed to create`);
+      } catch {
+        toast.error("Failed to create items");
       } finally {
         setUploading(false);
       }
     } else {
-      create(form);
+      create(normalizePayload(form));
     }
   };
 
@@ -181,7 +203,7 @@ function SimpleListSection({ queryKey, fetchFn, createFn, deleteFn, fields, titl
             {images.map((url, idx) => (
               <div key={idx} className="relative group">
                 <img src={url} alt="" className="w-16 h-16 rounded-lg object-cover border border-[var(--color-border)]" />
-                <button onClick={() => setForm(f => ({ ...f, [fieldKey]: f[fieldKey].filter((_, i) => i !== idx) }))} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"><X className="w-3 h-3" /></button>
+                <button type="button" aria-label="Remove selected image" onClick={(event) => { event.stopPropagation(); setForm(f => ({ ...f, [fieldKey]: (f[fieldKey] || []).filter((_, i) => i !== idx) })); }} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"><X className="w-3 h-3" /></button>
               </div>
             ))}
           </div>
@@ -214,19 +236,21 @@ function SimpleListSection({ queryKey, fetchFn, createFn, deleteFn, fields, titl
             )}
           </div>
         ))}
-        <button onClick={handleCreate} disabled={uploading || isPending} className="px-5 py-2 bg-[var(--color-rose-600)] text-white text-sm font-medium rounded-xl transition-all disabled:opacity-50">
-          <Plus className="w-4 h-4 inline mr-1" /> Add
+        <button type="button" onClick={handleCreate} disabled={uploading || isPending} className="px-5 py-2 bg-[var(--color-rose-600)] text-white text-sm font-medium rounded-xl transition-all disabled:opacity-50">
+          <Plus className="w-4 h-4 inline mr-1" /> {uploading || isPending ? "Saving..." : "Add"}
         </button>
       </div>
       <div className="space-y-2">
-        {items.map(item => (
+        {isLoading && <div className="text-sm text-[var(--color-text-muted)]">Loading {title.toLowerCase()}...</div>}
+        {!isLoading && items.length === 0 && <div className="text-sm text-[var(--color-text-muted)]">No {title.toLowerCase()} items yet.</div>}
+        {!isLoading && items.map(item => (
           <div key={item._id} className="flex items-center gap-3 p-3 rounded-xl bg-[var(--color-surface-card)] border border-[var(--color-border)]">
             {imageField && item[imageField] && <img src={item[imageField]} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />}
             <div className="flex-1 min-w-0">
               <p className="text-[var(--color-text-primary)] text-sm font-medium truncate">{item.title || item.question || item.name || item.customerName || item.organization}</p>
               <p className="text-xs text-[var(--color-text-muted)] truncate">{item.description || item.answer || item.review}</p>
             </div>
-            <button onClick={() => del(item._id)} className="p-1.5 hover:bg-red-500/10 rounded-lg text-[var(--color-text-muted)] hover:text-red-400 transition-colors flex-shrink-0"><Trash2 className="w-3.5 h-3.5" /></button>
+            <button type="button" onClick={() => del(item._id)} className="p-1.5 hover:bg-red-500/10 rounded-lg text-[var(--color-text-muted)] hover:text-red-400 transition-colors flex-shrink-0"><Trash2 className="w-3.5 h-3.5" /></button>
           </div>
         ))}
       </div>
@@ -239,10 +263,10 @@ export default function CMS() {
 
   const sectionProps = {
     gallery: { queryKey: QUERY_KEYS.GALLERY, fetchFn: cmsService.getGallery, createFn: cmsService.createGallery, deleteFn: cmsService.deleteGallery, title: "Gallery", imageField: "image", fields: [{ key: "title", label: "Title" }, { key: "category", label: "Category", type: "select", options: ["Facial", "Hair", "Hair Color", "Hair Spa", "Waxing", "Threading", "Bridal", "Nails", "Skin", "Other"] }, { key: "image", label: "Image", type: "dropzone" }] },
-    offers: { queryKey: QUERY_KEYS.OFFERS, fetchFn: cmsService.getOffers, createFn: cmsService.createOffer, deleteFn: cmsService.deleteOffer, title: "Offers", imageField: "bannerImage", fields: [{ key: "title", label: "Title" }, { key: "description", label: "Description", type: "textarea" }, { key: "discountText", label: "Discount Text (e.g. 30% OFF)" }, { key: "endDate", label: "End Date", type: "date" }, { key: "bannerImage", label: "Banner Image", type: "file" }] },
+    offers: { queryKey: QUERY_KEYS.OFFERS, fetchFn: cmsService.getOffers, createFn: cmsService.createOffer, deleteFn: cmsService.deleteOffer, title: "Offers", imageField: "bannerImage", fields: [{ key: "title", label: "Title" }, { key: "description", label: "Description", type: "textarea", required: false }, { key: "discountText", label: "Discount Text (e.g. 30% OFF)" }, { key: "startDate", label: "Start Date", type: "date" }, { key: "endDate", label: "End Date", type: "date" }, { key: "bannerImage", label: "Banner Image", type: "file", required: false }] },
     faqs: { queryKey: QUERY_KEYS.FAQS, fetchFn: cmsService.getFAQs, createFn: cmsService.createFAQ, deleteFn: cmsService.deleteFAQ, title: "FAQs", fields: [{ key: "question", label: "Question" }, { key: "answer", label: "Answer", type: "textarea" }] },
     testimonials: { queryKey: QUERY_KEYS.TESTIMONIALS, fetchFn: cmsService.getTestimonials, createFn: cmsService.createTestimonial, deleteFn: cmsService.deleteTestimonial, title: "Testimonials", fields: [{ key: "customerName", label: "Customer Name" }, { key: "review", label: "Review", type: "textarea" }, { key: "rating", label: "Rating (1-5)", type: "number" }] },
-    certificates: { queryKey: QUERY_KEYS.CERTIFICATES, fetchFn: cmsService.getCertificates, createFn: cmsService.createCertificate, deleteFn: cmsService.deleteCertificate, title: "Certificates", imageField: "certificateImage", fields: [{ key: "title", label: "Title" }, { key: "organization", label: "Organization" }, { key: "year", label: "Year", type: "number" }, { key: "certificateImage", label: "Image", type: "file" }] },
+    certificates: { queryKey: QUERY_KEYS.CERTIFICATES, fetchFn: cmsService.getCertificates, createFn: cmsService.createCertificate, deleteFn: cmsService.deleteCertificate, title: "Certificates", imageField: "certificateImage", fields: [{ key: "title", label: "Title" }, { key: "organization", label: "Organization" }, { key: "issueDate", label: "Issue Date", type: "date" }, { key: "certificateImage", label: "Image", type: "file" }] },
     achievements: { queryKey: QUERY_KEYS.ACHIEVEMENTS, fetchFn: cmsService.getAchievements, createFn: cmsService.createAchievement, deleteFn: cmsService.deleteAchievement, title: "Achievements", fields: [{ key: "title", label: "Title" }, { key: "description", label: "Description", type: "textarea" }, { key: "year", label: "Year", type: "number" }, { key: "category", label: "Category", type: "select", options: ["Award", "Achievement", "Certificate", "Trophy", "Milestone", "Media"] }] },
   };
 
