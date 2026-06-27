@@ -8,9 +8,17 @@ cloudinary.config({
 });
 
 const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+const allowedImageMimeTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+const upload = multer({
+    storage,
+    limits: { fileSize: 5 * 1024 * 1024 },
+    fileFilter: (_req, file, cb) => {
+        cb(null, allowedImageMimeTypes.has(file.mimetype));
+    },
+});
 
 module.exports = {
     cloudinary,
     upload,
+    allowedImageMimeTypes,
 };

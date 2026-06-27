@@ -1,11 +1,15 @@
 const asyncHandler = require("../utils/asyncHandler");
 const sendResponse = require("../utils/sendResponse");
 
-const { cloudinary } = require("../utils/cloudinary");
+const { cloudinary, allowedImageMimeTypes } = require("../utils/cloudinary");
 
 exports.uploadImage = asyncHandler(async (req, res, next) => {
     if (!req.file) {
-        return sendResponse(res, 400, false, "Please upload an image file.", null);
+        return sendResponse(res, 400, false, "Please upload a supported image file (JPG, PNG, WebP, or GIF) up to 5MB.", null);
+    }
+
+    if (!allowedImageMimeTypes.has(req.file.mimetype)) {
+        return sendResponse(res, 400, false, "Unsupported image format. Use JPG, PNG, WebP, or GIF.", null);
     }
 
     try {
