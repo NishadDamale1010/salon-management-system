@@ -5,6 +5,7 @@ import { QUERY_KEYS } from "../../constants/queryKeys";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Save, Globe, Image, Tag, HelpCircle, Star, Award, Trophy, Settings as SettingsIcon } from "lucide-react";
 import { cn } from "../../utils";
+import { useDropzone } from "react-dropzone";
 
 const SECTIONS = [
   { id: "settings", label: "Settings", icon: SettingsIcon },
@@ -101,19 +102,93 @@ function SimpleListSection({ queryKey, fetchFn, createFn, deleteFn, fields, titl
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({ queryKey, queryFn: fetchFn });
   const items = data?.data || [];
-  const [form, setForm] = useState(() => Object.fromEntries(fields.map(f => [f.key, ""])));
+  const [form, setForm] = useState(() => Object.fromEntries(fields.map(f => [f.key, f.type === 'dropzone' ? [] : (f.options ? f.options[0] : "")])));
   const [uploading, setUploading] = useState(false);
 
-  const { mutate: create } = useMutation({ mutationFn: createFn, onSuccess: () => { toast.success("Created!"); qc.invalidateQueries({ queryKey }); setForm(Object.fromEntries(fields.map(f => [f.key, ""]))); }, onError: err => toast.error(err.message) });
+  const { mutate: create, isPending } = useMutation({ mutationFn: createFn, onSuccess: () => { toast.success("Created!"); qc.invalidateQueries({ queryKey }); setForm(Object.fromEntries(fields.map(f => [f.key, f.type === 'dropzone' ? [] : (f.options ? f.options[0] : "")]))); }, onError: err => toast.error(err.message) });
   const { mutate: del } = useMutation({ mutationFn: deleteFn, onSuccess: () => { toast.success("Deleted!"); qc.invalidateQueries({ queryKey }); }, onError: err => toast.error(err.message) });
 
-  const handleImageUpload = async (e, key) => {
-    if (!e.target.files[0]) return;
+  const handleImageUpload = async (e, key, multiple = false) => {
+    const files = e.target ? Array.from(e.target.files) : Array.from(e);
+    if (!files.length) return;
     setUploading(true);
-    try { const res = await uploadService.uploadImage(e.target.files[0]); setForm(f => ({ ...f, [key]: res.data.url })); toast.success("Uploaded!"); }
-    catch { toast.error("Upload failed"); }
-    finally { setUploading(false); }
+    try {
+      if (multiple) {
+        const urls = await Promise.all(files.map(f => uploadService.uploadImage(f).then(res => res.data.url)));
+        setForm(f => ({ ...f, [key]: [...(f[key] || []), ...urls] }));
+      } else {
+        const res = await uploadService.uploadImage(files[0]);
+        setForm(f => ({ ...f, [key]: res.data.url }));
+      }
+      toast.success("Uploaded!");
+    } catch {
+      toast.error("Upload failed");
+    } finally {
+      setUploading(false);
+    }
   };
+
+  const handleCreate = async () => {
+    // If the form contains an array for a field (meaning multiple items like gallery images),
+    // we should create a record for each image.
+    const arrayFields = Object.entries(form).filter(([k, v]) => Array.isArray(v));
+    
+    if (arrayFields.length > 0) {
+      // Find the first array field (e.g., 'image')
+      const [arrayKey, arrayValues] = arrayFields[0];
+      if (arrayValues.length === 0) {
+        toast.error(`Please provide at least one ${arrayKey}`);
+        return;
+      }
+      
+      setUploading(true);
+      try {
+        // Create an entry for each image in the array using the other form fields
+        await Promise.all(arrayValues.map(val => {
+          const payload = { ...form, [arrayKey]: val };
+          return new Promise((resolve, reject) => {
+            createFn(payload).then(resolve).catch(reject);
+          });
+        }));
+        toast.success("All items created!");
+        qc.invalidateQueries({ queryKey });
+        setForm(Object.fromEntries(fields.map(f => [f.key, f.type === 'dropzone' ? [] : (f.options ? f.options[0] : "")])));
+      } catch (err) {
+        toast.error("Failed to create some items");
+      } finally {
+        setUploading(false);
+      }
+    } else {
+      create(form);
+    }
+  };
+
+  function DropzoneField({ fieldKey }) {
+    const onDrop = (acceptedFiles) => handleImageUpload(acceptedFiles, fieldKey, true);
+    const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, accept: {'image/*': []} });
+    const images = form[fieldKey] || [];
+
+    return (
+      <div className="space-y-2">
+        <div {...getRootProps()} className={cn("border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-colors", isDragActive ? "border-[var(--color-rose-500)] bg-[var(--color-rose-500)]/5" : "border-[var(--color-border)] hover:border-[var(--color-rose-400)] bg-[var(--color-surface-3)]")}>
+          <input {...getInputProps()} />
+          <Image className="w-8 h-8 text-[var(--color-text-muted)] mb-2" />
+          <p className="text-sm font-medium text-[var(--color-text-primary)]">Drag & drop images here</p>
+          <p className="text-xs text-[var(--color-text-muted)] mt-1">or click to select files (Multiple allowed)</p>
+        </div>
+        {images.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-2">
+            {images.map((url, idx) => (
+              <div key={idx} className="relative group">
+                <img src={url} alt="" className="w-16 h-16 rounded-lg object-cover border border-[var(--color-border)]" />
+                <button onClick={() => setForm(f => ({ ...f, [fieldKey]: f[fieldKey].filter((_, i) => i !== idx) }))} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"><X className="w-3 h-3" /></button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5">
@@ -125,14 +200,21 @@ function SimpleListSection({ queryKey, fetchFn, createFn, deleteFn, fields, titl
             <label className="block text-xs text-[var(--color-text-muted)] mb-1">{f.label}</label>
             {f.type === "file" ? (
               <input type="file" accept="image/*" onChange={e => handleImageUpload(e, f.key)} className="text-xs text-[var(--color-text-muted)]" />
+            ) : f.type === "dropzone" ? (
+              <DropzoneField fieldKey={f.key} />
             ) : f.type === "textarea" ? (
               <textarea value={form[f.key]} onChange={e => setForm(fv => ({ ...fv, [f.key]: e.target.value }))} rows={2} className="w-full px-3 py-2 rounded-lg bg-[var(--color-surface-3)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-sm focus:outline-none focus:border-[var(--color-rose-500)] transition-all resize-none" />
+            ) : f.type === "select" ? (
+              <select value={form[f.key]} onChange={e => setForm(fv => ({ ...fv, [f.key]: e.target.value }))} className="w-full px-3 py-2 rounded-lg bg-[var(--color-surface-3)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-sm focus:outline-none focus:border-[var(--color-rose-500)] transition-all appearance-none cursor-pointer">
+                <option value="" disabled>Select {f.label}</option>
+                {f.options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+              </select>
             ) : (
               <input type={f.type || "text"} value={form[f.key]} onChange={e => setForm(fv => ({ ...fv, [f.key]: e.target.value }))} className="w-full px-3 py-2 rounded-lg bg-[var(--color-surface-3)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-sm focus:outline-none focus:border-[var(--color-rose-500)] transition-all" />
             )}
           </div>
         ))}
-        <button onClick={() => create(form)} disabled={uploading} className="px-5 py-2 -white text-sm font-medium rounded-xl transition-all disabled:opacity-50">
+        <button onClick={handleCreate} disabled={uploading || isPending} className="px-5 py-2 bg-[var(--color-rose-600)] text-white text-sm font-medium rounded-xl transition-all disabled:opacity-50">
           <Plus className="w-4 h-4 inline mr-1" /> Add
         </button>
       </div>
@@ -156,12 +238,12 @@ export default function CMS() {
   const [section, setSection] = useState("settings");
 
   const sectionProps = {
-    gallery: { queryKey: QUERY_KEYS.GALLERY, fetchFn: cmsService.getGallery, createFn: cmsService.createGallery, deleteFn: cmsService.deleteGallery, title: "Gallery", imageField: "image", fields: [{ key: "title", label: "Title" }, { key: "category", label: "Category" }, { key: "image", label: "Image", type: "file" }] },
+    gallery: { queryKey: QUERY_KEYS.GALLERY, fetchFn: cmsService.getGallery, createFn: cmsService.createGallery, deleteFn: cmsService.deleteGallery, title: "Gallery", imageField: "image", fields: [{ key: "title", label: "Title" }, { key: "category", label: "Category", type: "select", options: ["Facial", "Hair", "Hair Color", "Hair Spa", "Waxing", "Threading", "Bridal", "Nails", "Skin", "Other"] }, { key: "image", label: "Image", type: "dropzone" }] },
     offers: { queryKey: QUERY_KEYS.OFFERS, fetchFn: cmsService.getOffers, createFn: cmsService.createOffer, deleteFn: cmsService.deleteOffer, title: "Offers", imageField: "bannerImage", fields: [{ key: "title", label: "Title" }, { key: "description", label: "Description", type: "textarea" }, { key: "discountText", label: "Discount Text (e.g. 30% OFF)" }, { key: "endDate", label: "End Date", type: "date" }, { key: "bannerImage", label: "Banner Image", type: "file" }] },
     faqs: { queryKey: QUERY_KEYS.FAQS, fetchFn: cmsService.getFAQs, createFn: cmsService.createFAQ, deleteFn: cmsService.deleteFAQ, title: "FAQs", fields: [{ key: "question", label: "Question" }, { key: "answer", label: "Answer", type: "textarea" }] },
     testimonials: { queryKey: QUERY_KEYS.TESTIMONIALS, fetchFn: cmsService.getTestimonials, createFn: cmsService.createTestimonial, deleteFn: cmsService.deleteTestimonial, title: "Testimonials", fields: [{ key: "customerName", label: "Customer Name" }, { key: "review", label: "Review", type: "textarea" }, { key: "rating", label: "Rating (1-5)", type: "number" }] },
     certificates: { queryKey: QUERY_KEYS.CERTIFICATES, fetchFn: cmsService.getCertificates, createFn: cmsService.createCertificate, deleteFn: cmsService.deleteCertificate, title: "Certificates", imageField: "certificateImage", fields: [{ key: "title", label: "Title" }, { key: "organization", label: "Organization" }, { key: "year", label: "Year", type: "number" }, { key: "certificateImage", label: "Image", type: "file" }] },
-    achievements: { queryKey: QUERY_KEYS.ACHIEVEMENTS, fetchFn: cmsService.getAchievements, createFn: cmsService.createAchievement, deleteFn: cmsService.deleteAchievement, title: "Achievements", fields: [{ key: "title", label: "Title" }, { key: "description", label: "Description", type: "textarea" }, { key: "year", label: "Year", type: "number" }, { key: "category", label: "Category" }] },
+    achievements: { queryKey: QUERY_KEYS.ACHIEVEMENTS, fetchFn: cmsService.getAchievements, createFn: cmsService.createAchievement, deleteFn: cmsService.deleteAchievement, title: "Achievements", fields: [{ key: "title", label: "Title" }, { key: "description", label: "Description", type: "textarea" }, { key: "year", label: "Year", type: "number" }, { key: "category", label: "Category", type: "select", options: ["Award", "Achievement", "Certificate", "Trophy", "Milestone", "Media"] }] },
   };
 
   return (
