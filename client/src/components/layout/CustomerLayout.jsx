@@ -16,6 +16,7 @@ const navItems = [
   { icon: Calendar, label: "Book", to: "/book" },
   { icon: ShoppingBag, label: "My Appts", to: "/appointments" },
   { icon: Gift, label: "Rewards", to: "/rewards" },
+  { icon: Trophy, label: "Leaderboard", to: "/leaderboard" },
   { icon: User, label: "Profile", to: "/profile" },
 ];
 

@@ -1,6 +1,7 @@
 const sendResponse = require("../utils/sendResponse");
 
 const errorMiddleware = (err, req, res, next) => {
+    console.error("SERVER ERROR LOG:", err);
     let statusCode = err.statusCode || 500;
     let message = err.message || "Internal Server Error";
 

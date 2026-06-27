@@ -57,6 +57,25 @@ const bookAppointment = async (userId, appointmentData) => {
         status: "Pending",
     });
 
+    // Notify Customer
+    await notificationService.createNotification(
+        userId,
+        "Appointment",
+        "Booking Requested 📅",
+        `Your appointment request for ${appointmentDate} at ${appointmentTime} has been received and is pending confirmation.`
+    );
+
+    // Notify Admins
+    const admins = await User.find({ role: "admin" });
+    for (const admin of admins) {
+        await notificationService.createNotification(
+            admin._id,
+            "Appointment",
+            "New Booking Request 🛎️",
+            `A new appointment has been requested for ${appointmentDate} at ${appointmentTime}.`
+        );
+    }
+
     return appointment;
 };
 
@@ -144,8 +163,8 @@ const updateAppointmentStatus = async (appointmentId, updateData) => {
     // Send notifications based on status change
     if (status && status !== previousStatus) {
         if (status === "Confirmed") {
-            const title = "Appointment Confirmed! \u2728";
-            const message = `Your appointment on ${new Date(appointment.appointmentDate).toDateString()} at ${appointment.appointmentTime} has been confirmed. Here is your Appointment Card!`;
+            const title = "Appointment Confirmed! ✨";
+            const message = `Hello Queen, your pampering session is confirmed! Your appointment for ${appointment.services.map(s => s.serviceName).join(", ")} on ${new Date(appointment.appointmentDate).toDateString()} at ${appointment.appointmentTime} is confirmed. Enjoy your self-care time, gorgeous! ✨ Here is your Appointment Card!`;
             
             // Appointment Card Notification
             await notificationService.createNotification(appointment.customer._id, "Appointment", title, message);

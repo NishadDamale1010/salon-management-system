@@ -7,6 +7,7 @@ export const authService = {
   logout: () => api.post("/auth/logout"),
   getMe: () => api.get("/auth/me"),
   updateMe: (data) => api.put("/auth/me", data),
+  getLeaderboard: () => api.get("/auth/leaderboard"),
 };
 
 export const serviceService = {

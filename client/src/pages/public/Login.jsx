@@ -7,6 +7,7 @@ import { Sparkles, Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { GoogleLogin } from "@react-oauth/google";
 import { toast } from "sonner";
 import { useState } from "react";
+import confetti from "canvas-confetti";
 import { useLogin, useGoogleLogin } from "../../hooks/useAuth";
 import { useAuthStore } from "../../store/authStore";
 import { SALON_NAME } from "../../constants";
@@ -26,9 +27,25 @@ export default function Login() {
 
   const { register, handleSubmit, formState: { errors } } = useForm({ resolver: zodResolver(schema) });
 
+  const playLoginSound = () => {
+    const audio = new Audio("https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3?filename=success-1-6297.mp3");
+    audio.play().catch(e => console.log("Audio play failed:", e));
+  };
+
+  const triggerRoyalWelcome = () => {
+    playLoginSound();
+    confetti({
+      particleCount: 150,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: ['#f43f5e', '#eab308', '#ec4899', '#ffffff'] // Rose, Gold, Pink
+    });
+  };
+
   const onSubmit = (data) => {
     login(data, {
       onSuccess: (res) => {
+        triggerRoyalWelcome();
         navigate(res?.data?.user?.role === "admin" || res?.data?.role === "admin" ? "/admin" : from, { replace: true });
       },
     });
@@ -39,6 +56,7 @@ export default function Login() {
   const handleGoogleSuccess = (credentialResponse) => {
     googleLoginMutation({ token: credentialResponse.credential }, {
       onSuccess: (res) => {
+        triggerRoyalWelcome();
         navigate(res?.data?.user?.role === "admin" || res?.data?.role === "admin" ? "/admin" : from, { replace: true });
       }
     });

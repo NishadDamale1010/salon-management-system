@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { CheckCircle, Sparkles, Clock, Check, ChevronRight, Calendar as CalIcon, CreditCard, Upload } from "lucide-react";
@@ -24,15 +24,24 @@ export default function BookAppointment() {
   const [isUploading, setIsUploading] = useState(false);
   const [booked, setBooked] = useState(null);
 
+  const queryClient = useQueryClient();
+
+  const playNotificationSound = () => {
+    const audio = new Audio("https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3?filename=success-1-6297.mp3");
+    audio.play().catch(e => console.log("Audio play failed:", e));
+  };
+
   const { data } = useQuery({ queryKey: QUERY_KEYS.SERVICES, queryFn: serviceService.getAll });
   const services = data?.data || [];
 
   const { mutate: book, isPending } = useMutation({
     mutationFn: appointmentService.book,
     onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MY_APPOINTMENTS });
       setBooked(res.data);
       setStep(STEPS.length);
       toast.success("Appointment requested! ✨");
+      playNotificationSound();
     },
     onError: (err) => toast.error(err.message),
   });

@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Sparkles, Calendar, ArrowRight, Bell, Gift, Trophy } from "lucide-react";
+import { Sparkles, Calendar, ArrowRight, Bell, Gift, Trophy, Crown } from "lucide-react";
+import confetti from "canvas-confetti";
 import { useAuthStore } from "../../store/authStore";
-import { appointmentService, notificationService, rewardService } from "../../services";
+import { appointmentService, notificationService, rewardService, authService } from "../../services";
 import { QUERY_KEYS } from "../../constants/queryKeys";
 import { formatDate, formatCurrency, getMembershipColor } from "../../utils";
 import { StatCard } from "../../components/ui/Card";
@@ -15,13 +16,31 @@ export default function CustomerDashboard() {
   const { data: apptData } = useQuery({ queryKey: QUERY_KEYS.MY_APPOINTMENTS, queryFn: appointmentService.getMyAppointments });
   const { data: notifData } = useQuery({ queryKey: QUERY_KEYS.NOTIFICATIONS, queryFn: notificationService.getAll });
   const { data: rewardsData } = useQuery({ queryKey: QUERY_KEYS.REWARDS, queryFn: rewardService.getAll });
+  const { data: leaderboardData } = useQuery({ queryKey: ["LEADERBOARD"], queryFn: authService.getLeaderboard });
 
   const appointments = apptData?.data || [];
   const notifications = notifData?.data || [];
   const rewards = rewardsData?.data || [];
+  const leaderboard = leaderboardData?.data?.lifetime || [];
 
   const upcoming = appointments.find(a => a.status === "Confirmed" || a.status === "Pending");
   const unreadCount = notifications.filter(n => !n.isRead).length;
+
+  // Calculate Points Away
+  let pointsAwayText = "";
+  if (leaderboard.length > 0 && user) {
+    const myRankIndex = leaderboard.findIndex(c => c._id === user._id);
+    if (myRankIndex === 0) {
+      pointsAwayText = "You are the reigning Queen! 👑 Keep glowing!";
+    } else if (myRankIndex > 0) {
+      const pointsDiff = leaderboard[myRankIndex - 1].glowPoints - user.glowPoints;
+      pointsAwayText = `You are only ${pointsDiff} Glow Points away from overtaking ${leaderboard[myRankIndex - 1].firstName}! Keep glowing, gorgeous! ✨`;
+    } else {
+      const lastOnBoard = leaderboard[leaderboard.length - 1];
+      const pointsDiff = lastOnBoard.glowPoints > user.glowPoints ? lastOnBoard.glowPoints - user.glowPoints : 10;
+      pointsAwayText = `You are ${pointsDiff} points away from entering the Leaderboard! Book a session to catch up!`;
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -29,10 +48,10 @@ export default function CustomerDashboard() {
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex items-start justify-between flex-wrap gap-4">
           <div>
-            <h1 className="font-display text-3xl font-bold text-[var(--color-text-primary)]">
-              Hello, {user?.firstName}! 👋
+            <h1 className="font-display text-3xl font-bold text-[var(--color-text-primary)] flex items-center gap-2">
+              Hello, Queen {user?.firstName}! <Crown className="w-8 h-8 text-yellow-400" />
             </h1>
-            <p className="text-[var(--color-text-muted)] mt-1">Welcome back to your beauty dashboard</p>
+            <p className="text-[var(--color-text-muted)] mt-1">Welcome back to your royal beauty dashboard</p>
           </div>
           <Link to="/book" className="inline-flex items-center gap-2 px-6 py-3 -white font-medium rounded-xl transition-all hover:shadow-[var(--shadow-glow-rose)] hover:-translate-y-0.5">
             <Calendar className="w-4 h-4" /> Book Appointment
@@ -69,6 +88,21 @@ export default function CustomerDashboard() {
           </div>
         </div>
       </motion.div>
+
+      {/* Points Away Widget */}
+      {pointsAwayText && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+          className="rounded-2xl bg-[var(--color-rose-500)]/5 border border-[var(--color-rose-500)]/30 p-5 flex items-center gap-4"
+        >
+          <div className="w-12 h-12 rounded-full bg-[var(--color-rose-500)]/20 flex items-center justify-center flex-shrink-0">
+            <Trophy className="w-6 h-6 text-[var(--color-rose-500)]" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-[var(--color-text-primary)]">Glow Points Goal</h3>
+            <p className="text-sm text-[var(--color-text-muted)] mt-0.5">{pointsAwayText}</p>
+          </div>
+        </motion.div>
+      )}
 
       {/* Upcoming Appointment */}
       {upcoming && (

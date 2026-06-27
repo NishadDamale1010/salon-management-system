@@ -11,7 +11,7 @@ import { toast } from "sonner";
 export default function Rewards() {
   const qc = useQueryClient();
   const [modal, setModal] = useState(null);
-  const [form, setForm] = useState({ title: "", description: "", pointsRequired: "", stock: "", isActive: true });
+  const [form, setForm] = useState({ title: "", description: "", glowPointsRequired: "", discountAmount: "", minimumBill: "", isActive: true });
   const [redeemModal, setRedeemModal] = useState(null);
 
   const { data } = useQuery({ queryKey: QUERY_KEYS.REWARDS, queryFn: rewardService.getAll });
@@ -19,13 +19,13 @@ export default function Rewards() {
   const rewards = data?.data || [];
   const redemptions = redemptionsData?.data || [];
 
-  const { mutate: create } = useMutation({ mutationFn: rewardService.create, onSuccess: () => { toast.success("Reward created!"); qc.invalidateQueries({ queryKey: QUERY_KEYS.REWARDS }); setModal(null); setForm({ title: "", description: "", pointsRequired: "", stock: "", isActive: true }); }, onError: err => toast.error(err.message) });
+  const { mutate: create } = useMutation({ mutationFn: rewardService.create, onSuccess: () => { toast.success("Reward created!"); qc.invalidateQueries({ queryKey: QUERY_KEYS.REWARDS }); setModal(null); setForm({ title: "", description: "", glowPointsRequired: "", discountAmount: "", minimumBill: "", isActive: true }); }, onError: err => toast.error(err.message) });
   const { mutate: update } = useMutation({ mutationFn: ({ id, data }) => rewardService.update(id, data), onSuccess: () => { toast.success("Updated!"); qc.invalidateQueries({ queryKey: QUERY_KEYS.REWARDS }); setModal(null); }, onError: err => toast.error(err.message) });
   const { mutate: del } = useMutation({ mutationFn: rewardService.delete, onSuccess: () => { toast.success("Deleted!"); qc.invalidateQueries({ queryKey: QUERY_KEYS.REWARDS }); }, onError: err => toast.error(err.message) });
   const { mutate: updateRedemption } = useMutation({ mutationFn: ({ id, data }) => rewardService.updateRedemptionStatus(id, data), onSuccess: () => { toast.success("Redemption updated!"); qc.invalidateQueries({ queryKey: QUERY_KEYS.ALL_REDEMPTIONS }); setRedeemModal(null); }, onError: err => toast.error(err.message) });
 
   const handleSubmit = () => {
-    const p = { ...form, pointsRequired: Number(form.pointsRequired), stock: Number(form.stock) };
+    const p = { ...form, glowPointsRequired: Number(form.glowPointsRequired), discountAmount: Number(form.discountAmount), minimumBill: Number(form.minimumBill) };
     if (modal === "create") create(p);
     else update({ id: modal._id, data: p });
   };
@@ -34,7 +34,7 @@ export default function Rewards() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div><h1 className="font-display text-2xl font-bold text-[var(--color-text-primary)]">Rewards Management</h1></div>
-        <button onClick={() => { setForm({ title: "", description: "", pointsRequired: "", stock: "", isActive: true }); setModal("create"); }} className="flex items-center gap-2 px-5 py-2.5 -white text-sm font-medium rounded-xl transition-all">
+        <button onClick={() => { setForm({ title: "", description: "", glowPointsRequired: "", discountAmount: "", minimumBill: "", isActive: true }); setModal("create"); }} className="flex items-center gap-2 px-5 py-2.5 -white text-sm font-medium rounded-xl transition-all">
           <Plus className="w-4 h-4" /> Add Reward
         </button>
       </div>
@@ -46,15 +46,15 @@ export default function Rewards() {
             <div className="flex items-start justify-between mb-3">
               <h3 className="font-display font-semibold text-[var(--color-text-primary)]">{r.title}</h3>
               <div className="flex gap-1">
-                <button onClick={() => { setForm({ ...r, pointsRequired: r.pointsRequired, stock: r.stock }); setModal(r); }} className="p-1.5 hover:bg-[var(--color-rose-500)]/5 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors"><Pencil className="w-3.5 h-3.5" /></button>
+                <button onClick={() => { setForm({ ...r, glowPointsRequired: r.glowPointsRequired, discountAmount: r.discountAmount, minimumBill: r.minimumBill }); setModal(r); }} className="p-1.5 hover:bg-[var(--color-rose-500)]/5 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors"><Pencil className="w-3.5 h-3.5" /></button>
                 <button onClick={() => del(r._id)} className="p-1.5 hover:bg-red-500/10 rounded-lg text-[var(--color-text-muted)] hover:text-red-400 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
               </div>
             </div>
             <p className="text-sm text-[var(--color-text-muted)] mb-3">{r.description}</p>
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1 text-yellow-400 font-bold text-sm"><Sparkles className="w-3.5 h-3.5" />{r.pointsRequired} pts</div>
+              <div className="flex items-center gap-1 text-yellow-400 font-bold text-sm"><Sparkles className="w-3.5 h-3.5" />{r.glowPointsRequired} pts</div>
               <div className="flex items-center gap-2">
-                <Badge variant="ghost">Stock: {r.stock}</Badge>
+                <Badge variant="ghost">Discount: ₹{r.discountAmount}</Badge>
                 <Badge variant={r.isActive ? "success" : "error"}>{r.isActive ? "Active" : "Off"}</Badge>
               </div>
             </div>
@@ -88,8 +88,9 @@ export default function Rewards() {
           {[
             { key: "title", label: "Reward Title", placeholder: "Free Facial" },
             { key: "description", label: "Description", placeholder: "One free facial session" },
-            { key: "pointsRequired", label: "Points Required", type: "number", placeholder: "500" },
-            { key: "stock", label: "Stock", type: "number", placeholder: "10" },
+            { key: "glowPointsRequired", label: "Points Required", type: "number", placeholder: "500" },
+            { key: "discountAmount", label: "Discount Amount (₹)", type: "number", placeholder: "100" },
+            { key: "minimumBill", label: "Minimum Bill (₹)", type: "number", placeholder: "0" },
           ].map(({ key, label, type = "text", placeholder }) => (
             <div key={key}>
               <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{label}</label>

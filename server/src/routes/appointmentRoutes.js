@@ -17,7 +17,7 @@ router.use(protect);
 
 // Customer API routes
 router.post("/", bookAppointment);
-router.get("/my", getCustomerAppointments);
+router.get("/my-appointments", getCustomerAppointments);
 router.get("/:id", getSingleAppointment); // Also accessible by Admin
 
 // Admin API routes

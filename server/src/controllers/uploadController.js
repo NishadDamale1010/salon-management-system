@@ -1,13 +1,27 @@
 const asyncHandler = require("../utils/asyncHandler");
 const sendResponse = require("../utils/sendResponse");
 
-exports.uploadImage = asyncHandler(async (req, res) => {
+const { cloudinary } = require("../utils/cloudinary");
+
+exports.uploadImage = asyncHandler(async (req, res, next) => {
     if (!req.file) {
         return sendResponse(res, 400, false, "Please upload an image file.", null);
     }
 
-    // req.file.path contains the public Cloudinary URL created by multer-storage-cloudinary
-    const imageUrl = req.file.path;
-
-    sendResponse(res, 200, true, "Image uploaded successfully", { url: imageUrl });
+    try {
+        const stream = cloudinary.uploader.upload_stream(
+            { folder: "salon-uploads" },
+            (error, result) => {
+                if (error) {
+                    console.error("Cloudinary upload error:", error);
+                    return next(error);
+                }
+                sendResponse(res, 200, true, "Image uploaded successfully", { url: result.secure_url });
+            }
+        );
+        stream.end(req.file.buffer);
+    } catch (err) {
+        console.error("Upload stream error:", err);
+        next(err);
+    }
 });

@@ -40,4 +40,10 @@ router.put(
     authController.updateMe
 );
 
+router.get(
+    "/leaderboard",
+    protect,
+    authController.getLeaderboard
+);
+
 module.exports = router;
