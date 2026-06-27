@@ -1,7 +1,12 @@
 import axios from "axios";
 
+const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+const baseURL = isLocal
+  ? (import.meta.env.VITE_API_URL || "http://localhost:5000/api")
+  : "https://salon-management-system-ijtv.onrender.com/api";
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "/api",
+  baseURL,
   withCredentials: true,
   headers: { "Content-Type": "application/json" },
 });
