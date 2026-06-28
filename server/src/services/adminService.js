@@ -226,7 +226,7 @@ const updateCustomerNotes = async (id, notesData) => {
     const customer = await User.findOneAndUpdate(
         { _id: id, role: "customer" },
         { adminNotes: validationResult.data.adminNotes },
-        { new: true }
+        { returnDocument: 'after' }
     ).select("-password");
 
     if (!customer) throw new AppError("Customer not found", 404);
@@ -369,7 +369,7 @@ const manageLeaderboardVisibility = async (id, settingsData) => {
     const customer = await User.findOneAndUpdate(
         { _id: id, role: "customer" },
         validationResult.data,
-        { new: true }
+        { returnDocument: 'after' }
     ).select("-password");
 
     if (!customer) throw new AppError("Customer not found", 404);

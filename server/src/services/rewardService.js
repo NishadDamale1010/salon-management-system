@@ -24,7 +24,7 @@ const updateReward = async (id, updateData) => {
     }
 
     const reward = await Reward.findByIdAndUpdate(id, validationResult.data, {
-        new: true,
+        returnDocument: 'after',
         runValidators: true,
     });
 
@@ -40,7 +40,7 @@ const deleteReward = async (id) => {
     const reward = await Reward.findByIdAndUpdate(
         id,
         { isActive: false },
-        { new: true }
+        { returnDocument: 'after' }
     );
 
     if (!reward) {

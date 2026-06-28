@@ -11,11 +11,12 @@ import { useState, useEffect } from "react";
 import { cn } from "../../utils";
 import { useAuthStore } from "../../store/authStore";
 import { useLogout } from "../../hooks/useAuth";
-import { getInitials, subscribeToPushNotifications } from "../../utils";
+import { getInitials } from "../../utils";
 import { SALON_NAME } from "../../constants";
 
-const navGroups = [
-  {
+import { useNotifications } from "../../hooks/useNotifications";
+
+const navGroups = [  {
     label: "Overview",
     items: [
       { icon: LayoutDashboard, label: "Dashboard", to: "/admin" },
@@ -56,11 +57,12 @@ export default function AdminLayout() {
   const user = useAuthStore((s) => s.user);
   const { mutate: logout } = useLogout();
 
+  // Mount notification listener so toasts and cache invalidations run globally
+  useNotifications();
+
   useEffect(() => {
-    if (user) {
-      subscribeToPushNotifications();
-    }
-  }, [user]);
+    // Optionally request permission or let user do it via UI
+  }, []);
 
   return (
     <div className="flex min-h-screen bg-[var(--color-surface)]">

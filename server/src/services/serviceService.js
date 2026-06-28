@@ -44,7 +44,7 @@ const updateService = async (id, serviceData) => {
     const service = await Service.findByIdAndUpdate(
         id,
         validationResult.data,
-        { new: true, runValidators: true }
+        { returnDocument: 'after', runValidators: true }
     );
 
     if (!service) {
@@ -59,7 +59,7 @@ const deleteService = async (id) => {
     const service = await Service.findByIdAndUpdate(
         id,
         { isActive: false },
-        { new: true }
+        { returnDocument: 'after' }
     );
 
     if (!service) {

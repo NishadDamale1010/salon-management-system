@@ -9,16 +9,24 @@ const notificationSchema = new mongoose.Schema(
         },
         type: {
             type: String,
-            enum: ["Appointment", "Reward", "Glow Points", "Offer", "Birthday", "System"],
             required: true,
         },
         title: {
             type: String,
             required: true,
         },
-        message: {
+        body: {
             type: String,
             required: true,
+        },
+        icon: {
+            type: String,
+        },
+        image: {
+            type: String,
+        },
+        route: {
+            type: String,
         },
         isRead: {
             type: Boolean,

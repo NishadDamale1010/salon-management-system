@@ -25,7 +25,7 @@ exports.createGallery = async (data) => {
 };
 exports.updateGallery = async (id, data) => {
     const validated = gallerySchema.partial().parse(data);
-    return Gallery.findByIdAndUpdate(id, validated, { new: true });
+    return Gallery.findByIdAndUpdate(id, validated, { returnDocument: 'after' });
 };
 exports.deleteGallery = async (id) => Gallery.findByIdAndDelete(id);
 
@@ -37,7 +37,7 @@ exports.createCertificate = async (data) => {
 };
 exports.updateCertificate = async (id, data) => {
     const validated = certificateSchema.partial().parse(data);
-    return Certificate.findByIdAndUpdate(id, validated, { new: true });
+    return Certificate.findByIdAndUpdate(id, validated, { returnDocument: 'after' });
 };
 exports.deleteCertificate = async (id) => Certificate.findByIdAndDelete(id);
 
@@ -49,7 +49,7 @@ exports.createAchievement = async (data) => {
 };
 exports.updateAchievement = async (id, data) => {
     const validated = achievementSchema.partial().parse(data);
-    return Achievement.findByIdAndUpdate(id, validated, { new: true });
+    return Achievement.findByIdAndUpdate(id, validated, { returnDocument: 'after' });
 };
 exports.deleteAchievement = async (id) => Achievement.findByIdAndDelete(id);
 
@@ -67,7 +67,7 @@ exports.updateSettings = async (data) => {
     if (!setting) {
         return Setting.create(validated);
     }
-    return Setting.findByIdAndUpdate(setting._id, validated, { new: true });
+    return Setting.findByIdAndUpdate(setting._id, validated, { returnDocument: 'after' });
 };
 
 // --- TESTIMONIALS ---
@@ -78,7 +78,7 @@ exports.createTestimonial = async (data) => {
 };
 exports.updateTestimonial = async (id, data) => {
     const validated = testimonialSchema.partial().parse(data);
-    return Testimonial.findByIdAndUpdate(id, validated, { new: true });
+    return Testimonial.findByIdAndUpdate(id, validated, { returnDocument: 'after' });
 };
 exports.deleteTestimonial = async (id) => Testimonial.findByIdAndDelete(id);
 
@@ -90,7 +90,7 @@ exports.createOffer = async (data) => {
 };
 exports.updateOffer = async (id, data) => {
     const validated = offerSchema.partial().parse(data);
-    return Offer.findByIdAndUpdate(id, validated, { new: true });
+    return Offer.findByIdAndUpdate(id, validated, { returnDocument: 'after' });
 };
 exports.deleteOffer = async (id) => Offer.findByIdAndDelete(id);
 
@@ -102,6 +102,6 @@ exports.createFAQ = async (data) => {
 };
 exports.updateFAQ = async (id, data) => {
     const validated = faqSchema.partial().parse(data);
-    return FAQ.findByIdAndUpdate(id, validated, { new: true });
+    return FAQ.findByIdAndUpdate(id, validated, { returnDocument: 'after' });
 };
 exports.deleteFAQ = async (id) => FAQ.findByIdAndDelete(id);

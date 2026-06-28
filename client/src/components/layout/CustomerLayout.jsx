@@ -6,9 +6,10 @@ import {
   LogOut, History,
 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { cn, getInitials, getMembershipColor, subscribeToPushNotifications } from "../../utils";
+import { cn, getInitials, getMembershipColor } from "../../utils";
 import { useAuthStore } from "../../store/authStore";
 import { useLogout } from "../../hooks/useAuth";
+import { useNotifications } from "../../hooks/useNotifications";
 import { SALON_NAME } from "../../constants";
 
 const navItems = [
@@ -27,11 +28,12 @@ export default function CustomerLayout() {
   const user = useAuthStore((s) => s.user);
   const { mutate: logout } = useLogout();
 
+  // Mount notification listener so toasts run globally
+  useNotifications();
+
   useEffect(() => {
-    if (user) {
-      subscribeToPushNotifications();
-    }
-  }, [user]);
+    // Optional permissions handle
+  }, []);
 
   return (
     <div className="flex min-h-screen bg-[var(--color-surface)] pb-16 md:pb-0">

@@ -47,7 +47,7 @@ exports.createProduct = async (data) => {
 
 exports.updateProduct = async (id, data) => {
     const validated = productSchema.partial().parse(data);
-    const product = await Product.findByIdAndUpdate(id, validated, { new: true });
+    const product = await Product.findByIdAndUpdate(id, validated, { returnDocument: 'after' });
     if (!product) throw new AppError("Product not found", 404);
     return product;
 };

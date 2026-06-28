@@ -65,7 +65,7 @@ const updateCurrentUser = async (id, data) => {
     const updatedUser = await User.findByIdAndUpdate(
         id,
         { firstName, lastName, phone, instagram },
-        { new: true, runValidators: true }
+        { returnDocument: 'after', runValidators: true }
     );
     return updatedUser;
 };

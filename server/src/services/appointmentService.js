@@ -68,7 +68,7 @@ const bookAppointment = async (userId, appointmentData) => {
     // Notify Admins
     const admins = await User.find({ role: "admin" });
     for (const admin of admins) {
-        notificationService.createNotification(
+        notificationService.sendToUser(
             admin._id,
             "Appointment",
             "New Booking Request 🛎️",
@@ -167,7 +167,7 @@ const updateAppointmentStatus = async (appointmentId, updateData) => {
             const message = `Hello Queen, your pampering session is confirmed! Your appointment for ${appointment.services.map(s => s.serviceName).join(", ")} on ${new Date(appointment.appointmentDate).toDateString()} at ${appointment.appointmentTime} is confirmed. Enjoy your self-care time, gorgeous! ✨ Here is your Appointment Card!`;
             
             // Appointment Card Notification
-            notificationService.createNotification(appointment.customer._id, "Appointment", title, message).catch(console.error);
+            notificationService.sendToUser(appointment.customer._id, "Appointment", title, message, { route: `/appointments/${appointment._id}` }).catch(console.error);
             
             // Send Email
             if (appointment.customer.email) {

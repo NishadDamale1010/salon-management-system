@@ -35,7 +35,7 @@ const productSchema = new mongoose.Schema(
             default: "",
         },
         features: { type: String, trim: true },
-        benefits: { type: String, trim: true },
+        benefits: [{ type: String, trim: true }],
         keyIngredients: {
             type: [String],
             default: [],

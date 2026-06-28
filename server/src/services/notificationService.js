@@ -1,74 +1,211 @@
 const Notification = require("../models/Notification");
+const FCMToken = require("../models/FCMToken");
 const AppError = require("../utils/AppError");
-const User = require("../models/User");
-const webpush = require("web-push");
+const { getApps } = require("firebase-admin/app");
+const { getMessaging } = require("firebase-admin/messaging");
 
-// Configure web-push with VAPID keys
-// This requires VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, and VAPID_SUBJECT in .env
-if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
-    webpush.setVapidDetails(
-        process.env.VAPID_SUBJECT || "mailto:admin@gayatri-beauty.com",
-        process.env.VAPID_PUBLIC_KEY,
-        process.env.VAPID_PRIVATE_KEY
-    );
-}
+// We still need to require firebaseAdmin to ensure it initializes
+require("../firebase/firebaseAdmin");
 
-exports.getUserNotifications = async (userId) => {
+/**
+ * Save notification to MongoDB
+ */
+const saveDatabaseNotification = async (userId, type, title, body, options = {}) => {
+    return await Notification.create({
+        user: userId,
+        type,
+        title,
+        body,
+        icon: options.icon,
+        image: options.image,
+        route: options.route,
+    });
+};
+
+/**
+ * Send FCM push notification to a specific token
+ */
+const sendNotification = async (token, title, body, data = {}) => {
+    if (getApps().length === 0) return false;
+
+    try {
+        const message = {
+            notification: {
+                title,
+                body,
+                ...(data.image && { image: data.image })
+            },
+            data: {
+                click_action: "FLUTTER_NOTIFICATION_CLICK", // for cross-platform support
+                route: data.route || "/",
+                type: data.type || "System"
+            },
+            token,
+        };
+
+        const response = await getMessaging().send(message);
+        console.log("Successfully sent FCM message:", response);
+        return true;
+    } catch (error) {
+        console.error("Error sending FCM message:", error);
+        
+        // Handle invalid tokens
+        if (error.code === 'messaging/invalid-registration-token' || error.code === 'messaging/registration-token-not-registered') {
+            await FCMToken.deleteOne({ token });
+        }
+        
+        return false;
+    }
+};
+
+/**
+ * Send push notification to a single user (all their devices)
+ */
+const sendToUser = async (userId, type, title, body, options = {}) => {
+    // 1. Save to DB
+    const dbNotification = await saveDatabaseNotification(userId, type, title, body, options);
+
+    // 2. Fetch all FCM tokens for user
+    const userTokens = await FCMToken.find({ user: userId });
+    
+    if (userTokens.length > 0 && getApps().length > 0) {
+        const tokens = userTokens.map(t => t.token);
+        
+        const message = {
+            notification: {
+                title,
+                body,
+                ...(options.image && { image: options.image })
+            },
+            data: {
+                route: options.route || "/",
+                type: type || "System",
+                notificationId: dbNotification._id.toString()
+            },
+            tokens,
+        };
+
+        try {
+            const response = await getMessaging().sendEachForMulticast(message);
+            
+            // Clean up invalid tokens
+            if (response.failureCount > 0) {
+                const failedTokens = [];
+                response.responses.forEach((resp, idx) => {
+                    if (!resp.success) {
+                        if (resp.error.code === 'messaging/invalid-registration-token' || 
+                            resp.error.code === 'messaging/registration-token-not-registered') {
+                            failedTokens.push(tokens[idx]);
+                        }
+                    }
+                });
+                
+                if (failedTokens.length > 0) {
+                    await FCMToken.deleteMany({ token: { $in: failedTokens } });
+                }
+            }
+        } catch (error) {
+            console.error("Error sending multicast message:", error);
+        }
+    }
+
+    return dbNotification;
+};
+
+/**
+ * Send push notification to multiple users
+ */
+const sendToMany = async (userIds, type, title, body, options = {}) => {
+    const dbNotifications = [];
+    
+    for (const userId of userIds) {
+        dbNotifications.push(
+            await saveDatabaseNotification(userId, type, title, body, options)
+        );
+    }
+
+    const userTokens = await FCMToken.find({ user: { $in: userIds } });
+    
+    if (userTokens.length > 0 && getApps().length > 0) {
+        const tokens = userTokens.map(t => t.token);
+        
+        const message = {
+            notification: {
+                title,
+                body,
+                ...(options.image && { image: options.image })
+            },
+            data: {
+                route: options.route || "/",
+                type: type || "System"
+            },
+            tokens,
+        };
+
+        try {
+            const response = await getMessaging().sendEachForMulticast(message);
+            
+            if (response.failureCount > 0) {
+                const failedTokens = [];
+                response.responses.forEach((resp, idx) => {
+                    if (!resp.success && 
+                        (resp.error.code === 'messaging/invalid-registration-token' || 
+                         resp.error.code === 'messaging/registration-token-not-registered')) {
+                        failedTokens.push(tokens[idx]);
+                    }
+                });
+                
+                if (failedTokens.length > 0) {
+                    await FCMToken.deleteMany({ token: { $in: failedTokens } });
+                }
+            }
+        } catch (error) {
+            console.error("Error sending bulk multicast:", error);
+        }
+    }
+    
+    return dbNotifications;
+};
+
+// Compatibility wrapper for old createNotification calls
+const createNotification = async (userId, type, title, body) => {
+    return await sendToUser(userId, type, title, body);
+};
+
+// Existing logic for retrieving/managing notifications
+const getUserNotifications = async (userId) => {
     return Notification.find({ user: userId }).sort("-createdAt").limit(50);
 };
 
-exports.markAsRead = async (userId, notificationId) => {
+const markAsRead = async (userId, notificationId) => {
     const notification = await Notification.findOneAndUpdate(
         { _id: notificationId, user: userId },
         { isRead: true },
-        { new: true }
+        { returnDocument: 'after' }
     );
     if (!notification) throw new AppError("Notification not found", 404);
     return notification;
 };
 
-exports.markAllAsRead = async (userId) => {
+const markAllAsRead = async (userId) => {
     await Notification.updateMany({ user: userId, isRead: false }, { isRead: true });
     return { success: true, message: "All notifications marked as read" };
 };
 
-exports.deleteNotification = async (userId, notificationId) => {
+const deleteNotification = async (userId, notificationId) => {
     const notification = await Notification.findOneAndDelete({ _id: notificationId, user: userId });
     if (!notification) throw new AppError("Notification not found", 404);
     return { success: true, message: "Notification deleted" };
 };
 
-exports.createNotification = async (userId, type, title, message) => {
-    const notification = await Notification.create({
-        user: userId,
-        type,
-        title,
-        message,
-    });
-
-    try {
-        const user = await User.findById(userId).select("+pushSubscriptions");
-        if (user && user.pushSubscriptions && user.pushSubscriptions.length > 0) {
-            const payload = JSON.stringify({
-                title,
-                body: message,
-                icon: "/favicon.png", // or a specific push icon
-                url: "/dashboard"
-            });
-
-            // Send push to all subscriptions concurrently (Fire and forget to avoid blocking)
-            const pushPromises = user.pushSubscriptions.map(sub => 
-                webpush.sendNotification(sub, payload).catch(err => {
-                    console.error("Push notification failed for a subscription:", err);
-                    // Could potentially remove invalid subscriptions here (e.g. if status is 410 Gone)
-                })
-            );
-
-            Promise.all(pushPromises).catch(err => console.error("Error in push promises:", err));
-        }
-    } catch (error) {
-        console.error("Error sending web push notification:", error);
-    }
-
-    return notification;
+module.exports = {
+    saveDatabaseNotification,
+    sendNotification,
+    sendToUser,
+    sendToMany,
+    createNotification, // Kept for backwards compatibility
+    getUserNotifications,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification
 };

@@ -60,4 +60,3 @@ export const truncate = (str, n = 80) =>
 export const glowPointsFromAmount = (amount) =>
   Math.floor((amount || 0) / 100);
 
-export * from "./pushNotifications";
