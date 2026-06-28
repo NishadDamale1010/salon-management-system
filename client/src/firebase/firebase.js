@@ -19,7 +19,6 @@ const firebaseConfig = {
     storageBucket: cleanEnv(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET),
     messagingSenderId: cleanEnv(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID),
     appId: cleanEnv(import.meta.env.VITE_FIREBASE_APP_ID),
-    measurementId: cleanEnv(import.meta.env.VITE_FIREBASE_MEASUREMENT_ID),
 };
 
 let app;
@@ -83,8 +82,7 @@ export const requestFirebaseNotificationPermission = async () => {
             return null;
         }
 
-        const vapidKey = cleanEnv(import.meta.env.VITE_VAPID_PUBLIC_KEY)
-            || cleanEnv(import.meta.env.VITE_FIREBASE_VAPID_KEY);
+        const vapidKey = cleanEnv(import.meta.env.VITE_VAPID_PUBLIC_KEY) || cleanEnv(import.meta.env.VITE_FIREBASE_VAPID_KEY);
         if (!vapidKey) {
             warnDev("VITE_VAPID_PUBLIC_KEY or VITE_FIREBASE_VAPID_KEY is not defined.");
             return null;

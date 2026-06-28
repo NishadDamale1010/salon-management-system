@@ -12,7 +12,7 @@ export default defineConfig({
       registerType: "prompt",
       injectRegister: "auto",
       devOptions: {
-        enabled: true, // Enables PWA support during local development
+        enabled: false, // Avoid Workbox dev-dist precache warnings during local development.
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
