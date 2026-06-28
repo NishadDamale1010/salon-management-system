@@ -56,7 +56,7 @@ export default function Leaderboard() {
                   <h3 className="font-display text-xl font-bold mt-4">{top3[1].firstName} {top3[1].lastName}</h3>
                   <p className="text-sm text-gray-500 mb-4">{top3[1].membership} Member</p>
                   <div className="w-full pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <p className="font-display text-2xl font-bold text-gray-600 dark:text-gray-300">{top3[1].glowPoints}</p>
+                    <p className="font-display text-2xl font-bold text-gray-600 dark:text-gray-300">{top3[1].lifetimeGlowPoints}</p>
                     <p className="text-xs text-gray-400 uppercase tracking-wider">Points</p>
                   </div>
                 </motion.div>
@@ -77,7 +77,7 @@ export default function Leaderboard() {
                   <h3 className="font-display text-2xl font-bold mt-5 text-yellow-700 dark:text-yellow-500">{top3[0].firstName} {top3[0].lastName}</h3>
                   <p className="text-sm text-yellow-600/70 dark:text-yellow-500/70 mb-5">{top3[0].membership} Member</p>
                   <div className="w-full pt-5 border-t border-yellow-200 dark:border-yellow-700/50">
-                    <p className="font-display text-4xl font-bold text-yellow-600 dark:text-yellow-500">{top3[0].glowPoints}</p>
+                    <p className="font-display text-4xl font-bold text-yellow-600 dark:text-yellow-500">{top3[0].lifetimeGlowPoints}</p>
                     <p className="text-sm text-yellow-600/70 dark:text-yellow-500/70 uppercase tracking-wider font-semibold">Points</p>
                   </div>
                 </motion.div>
@@ -98,7 +98,7 @@ export default function Leaderboard() {
                   <h3 className="font-display text-xl font-bold mt-4 text-amber-800 dark:text-amber-500">{top3[2].firstName} {top3[2].lastName}</h3>
                   <p className="text-sm text-amber-600/70 mb-4">{top3[2].membership} Member</p>
                   <div className="w-full pt-4 border-t border-amber-200 dark:border-amber-900/50">
-                    <p className="font-display text-2xl font-bold text-amber-700 dark:text-amber-500">{top3[2].glowPoints}</p>
+                    <p className="font-display text-2xl font-bold text-amber-700 dark:text-amber-500">{top3[2].lifetimeGlowPoints}</p>
                     <p className="text-xs text-amber-600/70 uppercase tracking-wider">Points</p>
                   </div>
                 </motion.div>
@@ -144,7 +144,7 @@ export default function Leaderboard() {
                         </div>
 
                         <div className="col-span-4 text-right">
-                          <p className="font-display font-bold text-lg text-[var(--color-text-primary)]">{customer.glowPoints}</p>
+                          <p className="font-display font-bold text-lg text-[var(--color-text-primary)]">{customer.lifetimeGlowPoints}</p>
                         </div>
                       </motion.div>
                     );
@@ -184,7 +184,7 @@ export default function Leaderboard() {
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-[var(--color-text-muted)]">Total Points</span>
-                      <span className="font-display font-bold text-gradient-rose">{user.glowPoints}</span>
+                      <span className="font-display font-bold text-gradient-rose">{user.lifetimeGlowPoints}</span>
                     </div>
                   </div>
 
@@ -199,7 +199,7 @@ export default function Leaderboard() {
                         </div>
                       );
                     } else if (myRankIndex > 0) {
-                      const pointsDiff = leaderboard[myRankIndex - 1].glowPoints - user.glowPoints;
+                      const pointsDiff = leaderboard[myRankIndex - 1].lifetimeGlowPoints - user.lifetimeGlowPoints;
                       return (
                         <div className="bg-[var(--color-surface-3)] rounded-2xl p-4">
                           <div className="flex items-center gap-2 text-[var(--color-text-primary)] mb-2">
