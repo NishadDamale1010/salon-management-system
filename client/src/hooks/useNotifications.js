@@ -40,11 +40,12 @@ export const useNotifications = () => {
     };
 
     // Initialize FCM
-    const initFCM = async () => {
+    const initFCM = async (isManual = false) => {
         if (!user) return;
         
-        // Auto-request or check if already granted
-        if (Notification.permission === "granted" || Notification.permission === "default") {
+        // On mobile, requestPermission on load is often blocked.
+        // We only auto-init if already granted, OR if the user manually clicked a button.
+        if (Notification.permission === "granted" || isManual) {
             const token = await requestFirebaseNotificationPermission();
             if (token) {
                 setFcmToken(token);
@@ -53,6 +54,8 @@ export const useNotifications = () => {
             } else if (Notification.permission === "denied") {
                 setPermissionStatus("denied");
             }
+        } else if (Notification.permission === "denied") {
+            setPermissionStatus("denied");
         }
     };
 
@@ -131,7 +134,7 @@ export const useNotifications = () => {
         notifications,
         unreadCount,
         permissionStatus,
-        requestPermission: initFCM, // Expose to let users manually request
+        requestPermission: () => initFCM(true), // Expose to let users manually request
         markAsRead,
         markAllAsRead,
         fetchNotifications
