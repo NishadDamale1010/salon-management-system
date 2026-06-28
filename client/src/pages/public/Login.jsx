@@ -176,7 +176,7 @@ export default function Login() {
                   theme="outline"
                   shape="pill"
                   size="large"
-                  width="100%"
+                  width="320"
                 />
               </div>
 
