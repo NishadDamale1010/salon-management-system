@@ -54,6 +54,34 @@ const buildPayloadData = ({ type, title, body, options = {}, notificationId }) =
     });
 };
 
+const buildWebpushConfig = (data) => {
+    const route = data.route || "/notifications";
+    const title = data.title || "Gayatri Beauty Studio";
+    const body = data.body || "You have a new notification.";
+
+    return {
+        headers: {
+            Urgency: "high",
+        },
+        notification: {
+            title,
+            body,
+            icon: data.icon || data.image || "/icons/icon-192.png",
+            badge: "/favicon.png",
+            tag: data.notificationId || `${title}:${route}`,
+            data: {
+                ...data,
+                route,
+            },
+            renotify: false,
+            requireInteraction: false,
+        },
+        fcmOptions: {
+            link: route,
+        },
+    };
+};
+
 const cleanupInvalidTokens = async (tokens, responses) => {
     const failedTokens = [];
 
@@ -81,12 +109,12 @@ const sendToTokens = async (tokens, data) => {
         for (const chunk of chunks) {
             const response = await messaging.sendEachForMulticast({
                 tokens: chunk,
-                data,
-                webpush: {
-                    headers: {
-                        Urgency: "high",
-                    },
+                notification: {
+                    title: data.title || "Gayatri Beauty Studio",
+                    body: data.body || "You have a new notification.",
                 },
+                data,
+                webpush: buildWebpushConfig(data),
             });
 
             if (response.failureCount > 0) {
@@ -106,20 +134,22 @@ const sendNotification = async (token, title, body, data = {}) => {
     if (!messaging) return false;
 
     try {
+        const payloadData = buildPayloadData({
+            type: data.type,
+            title,
+            body,
+            options: data,
+            notificationId: data.notificationId,
+        });
+
         await messaging.send({
             token,
-            data: buildPayloadData({
-                type: data.type,
+            notification: {
                 title,
                 body,
-                options: data,
-                notificationId: data.notificationId,
-            }),
-            webpush: {
-                headers: {
-                    Urgency: "high",
-                },
             },
+            data: payloadData,
+            webpush: buildWebpushConfig(payloadData),
         });
 
         return true;

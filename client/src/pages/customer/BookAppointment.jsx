@@ -18,6 +18,7 @@ export default function BookAppointment() {
   
   const [step, setStep] = useState(0);
   const [selectedServices, setSelectedServices] = useState([]);
+  const [customServiceName, setCustomServiceName] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [notes, setNotes] = useState("");
@@ -66,6 +67,29 @@ export default function BookAppointment() {
     );
   };
 
+  const addCustomService = () => {
+    const name = customServiceName.trim();
+    if (name.length < 2) {
+      toast.error("Please enter the service you want");
+      return;
+    }
+
+    const customId = `custom:${name.toLowerCase()}`;
+    if (selectedServices.some(s => s._id === customId || s.name.toLowerCase() === name.toLowerCase())) {
+      toast.error("This service is already selected");
+      return;
+    }
+
+    setSelectedServices(prev => [...prev, {
+      _id: customId,
+      name,
+      price: 0,
+      duration: 0,
+      isCustom: true,
+    }]);
+    setCustomServiceName("");
+  };
+
   const totalAmount = selectedServices.reduce((sum, s) => sum + s.price, 0);
   const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration, 0);
 
@@ -93,7 +117,8 @@ export default function BookAppointment() {
 
   const handleBook = () => {
     book({
-      serviceIds: selectedServices.map(s => s._id),
+      serviceIds: selectedServices.filter(s => !s.isCustom).map(s => s._id),
+      customServices: selectedServices.filter(s => s.isCustom).map(s => s.name),
       appointmentDate: date,
       appointmentTime: time,
       notes,
@@ -177,9 +202,25 @@ export default function BookAppointment() {
                 );
               })}
             </div>
+            <div className="mt-4 rounded-xl bg-[var(--color-surface-card)] border border-dashed border-[var(--color-rose-500)]/40 p-4 space-y-3">
+              <div>
+                <p className="font-medium text-[var(--color-text-primary)] text-sm">Can't find your service?</p>
+                <p className="text-xs text-[var(--color-text-muted)] mt-1">Add a custom request. The owner will review it and decide whether to accept it.</p>
+              </div>
+              <div className="flex gap-2">
+                <input
+                  value={customServiceName}
+                  onChange={e => setCustomServiceName(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addCustomService(); } }}
+                  placeholder="e.g. Bridal bun with flowers"
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-[var(--color-surface-3)] border border-[var(--color-border)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-rose-500)] transition-all text-sm"
+                />
+                <button type="button" onClick={addCustomService} className="px-4 py-2.5 -white rounded-xl text-sm font-medium">Add</button>
+              </div>
+            </div>
             {selectedServices.length > 0 && (
               <div className="mt-4 p-4 rounded-xl bg-[var(--color-surface-card)] border border-[var(--color-border)] flex justify-between items-center">
-                <p className="text-sm text-[var(--color-text-muted)]">{selectedServices.length} service{selectedServices.length > 1 ? "s" : ""} · {totalDuration} min</p>
+                <p className="text-sm text-[var(--color-text-muted)]">{selectedServices.length} service{selectedServices.length > 1 ? "s" : ""} · {totalDuration} min {selectedServices.some(s => s.isCustom) ? "· custom request included" : ""}</p>
                 <p className="font-bold text-[var(--color-rose-400)]">{formatCurrency(totalAmount)}</p>
               </div>
             )}
@@ -301,9 +342,9 @@ export default function BookAppointment() {
               <div>
                 <p className="text-xs text-[var(--color-text-muted)] mb-2">Services</p>
                 {selectedServices.map(s => (
-                  <div key={s._id} className="flex justify-between py-1.5 text-sm">
-                    <span className="text-[var(--color-text-primary)]">{s.name}</span>
-                    <span className="text-[var(--color-rose-400)]">{formatCurrency(s.price)}</span>
+                  <div key={s._id} className="flex justify-between py-1.5 text-sm gap-4">
+                    <span className="text-[var(--color-text-primary)]">{s.name}{s.isCustom ? " (custom request)" : ""}</span>
+                    <span className="text-[var(--color-rose-400)] whitespace-nowrap">{s.isCustom ? "Owner will confirm" : formatCurrency(s.price)}</span>
                   </div>
                 ))}
               </div>

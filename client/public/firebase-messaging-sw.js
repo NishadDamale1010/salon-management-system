@@ -29,7 +29,12 @@ if (firebaseConfig.apiKey) {
     messaging.onBackgroundMessage((payload) => {
         const data = payload.data || {};
         const notification = payload.notification || {};
-        const title = notification.title || data.title || "Gayatri Beauty Studio";
+
+        // When the backend sends a Web Push notification payload, the browser can
+        // display it even when the app is closed. Avoid manually showing it twice.
+        if (notification.title || notification.body) return;
+
+        const title = data.title || "Gayatri Beauty Studio";
         const body = notification.body || data.body || "You have a new notification.";
         const route = getSafeRoute(data.route);
 

@@ -3,7 +3,10 @@ const { z } = require("zod");
 const createAppointmentSchema = z.object({
     serviceIds: z
         .array(z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid service ID"))
-        .min(1, "At least one service is required to book an appointment"),
+        .default([]),
+    customServices: z
+        .array(z.string().trim().min(2, "Custom service must be at least 2 characters").max(100, "Custom service cannot exceed 100 characters"))
+        .default([]),
     appointmentDate: z.coerce.date({
         required_error: "Appointment date is required",
         invalid_type_error: "Invalid date format",
@@ -13,6 +16,9 @@ const createAppointmentSchema = z.object({
     paymentMethod: z.enum(["Cash", "Manual UPI", "Razorpay", "Stripe"]).optional(),
     transactionId: z.string().optional(),
     paymentScreenshot: z.string().optional(),
+}).refine((data) => data.serviceIds.length > 0 || data.customServices.length > 0, {
+    message: "At least one service or custom service is required to book an appointment",
+    path: ["serviceIds"],
 });
 
 const updateAppointmentStatusSchema = z.object({
