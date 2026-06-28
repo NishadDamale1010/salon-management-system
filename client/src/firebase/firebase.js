@@ -12,14 +12,30 @@ const warnDev = (...args) => {
     if (isDev) console.warn(...args);
 };
 
-const firebaseConfig = {
-    apiKey: cleanEnv(import.meta.env.VITE_FIREBASE_API_KEY),
-    authDomain: cleanEnv(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN),
-    projectId: cleanEnv(import.meta.env.VITE_FIREBASE_PROJECT_ID),
-    storageBucket: cleanEnv(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET),
-    messagingSenderId: cleanEnv(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID),
-    appId: cleanEnv(import.meta.env.VITE_FIREBASE_APP_ID),
+const defaultFirebaseConfig = {
+    apiKey: "AIzaSyB9fOj3Aqfjj3KijM6CVYV7PPqNw8No0dw",
+    authDomain: "salon-management-554d6.firebaseapp.com",
+    projectId: "salon-management-554d6",
+    storageBucket: "salon-management-554d6.firebasestorage.app",
+    messagingSenderId: "710416836437",
+    appId: "1:710416836437:web:25e28f9a73c7d9153571dc",
+    measurementId: "G-EDZQPHDB0X",
 };
+
+const firebaseConfig = {
+    apiKey: cleanEnv(import.meta.env.VITE_FIREBASE_API_KEY) || defaultFirebaseConfig.apiKey,
+    authDomain: cleanEnv(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN) || defaultFirebaseConfig.authDomain,
+    projectId: cleanEnv(import.meta.env.VITE_FIREBASE_PROJECT_ID) || defaultFirebaseConfig.projectId,
+    storageBucket: cleanEnv(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET) || defaultFirebaseConfig.storageBucket,
+    messagingSenderId: cleanEnv(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID) || defaultFirebaseConfig.messagingSenderId,
+    appId: cleanEnv(import.meta.env.VITE_FIREBASE_APP_ID) || defaultFirebaseConfig.appId,
+    measurementId: cleanEnv(import.meta.env.VITE_FIREBASE_MEASUREMENT_ID) || defaultFirebaseConfig.measurementId,
+};
+
+const defaultVapidPublicKey = [
+    "BNuwRmFSkrZRiJFb-VNHuGcilac5owKvJxg5jclUo4wZmQZMEAaR1NzKJYgYnbqrig",
+    "TksbhYLLc_KHjdAHWYZLE",
+].join("");
 
 let app;
 let messagingPromise;
@@ -82,7 +98,9 @@ export const requestFirebaseNotificationPermission = async () => {
             return null;
         }
 
-        const vapidKey = cleanEnv(import.meta.env.VITE_VAPID_PUBLIC_KEY) || cleanEnv(import.meta.env.VITE_FIREBASE_VAPID_KEY);
+        const vapidKey = cleanEnv(import.meta.env.VITE_VAPID_PUBLIC_KEY)
+            || cleanEnv(import.meta.env.VITE_FIREBASE_VAPID_KEY)
+            || defaultVapidPublicKey;
         if (!vapidKey) {
             warnDev("VITE_VAPID_PUBLIC_KEY or VITE_FIREBASE_VAPID_KEY is not defined.");
             return null;
