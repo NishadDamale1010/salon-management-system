@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Outlet } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Menu, X, Instagram } from "lucide-react";
+import { Sparkles, Menu, X, Camera } from "lucide-react";
 import { cn } from "../../utils";
 import { useAuthStore } from "../../store/authStore";
 import { useLogout } from "../../hooks/useAuth";
@@ -81,7 +81,7 @@ export default function PublicLayout() {
               aria-label="Instagram"
               className="w-10 h-10 rounded-xl border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)] hover:text-white hover:bg-gradient-to-br hover:from-purple-500 hover:to-pink-500 hover:border-transparent transition-all"
             >
-              <Instagram className="w-4 h-4" />
+              <Camera className="w-4 h-4" />
             </a>
             {isAuthenticated ? (
               <div className="flex items-center gap-2">
@@ -151,7 +151,7 @@ export default function PublicLayout() {
                     rel="noopener noreferrer"
                     className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-[var(--color-border)] text-[var(--color-text-secondary)] text-sm font-medium hover:bg-gradient-to-r hover:from-purple-500 hover:to-pink-500 hover:text-white transition-all"
                   >
-                    <Instagram className="w-4 h-4" /> Instagram
+                    <Camera className="w-4 h-4" /> Instagram
                   </a>
                 </div>
                 <div className="pt-2 flex gap-2">

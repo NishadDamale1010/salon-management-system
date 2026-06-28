@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import {
   Sparkles, ArrowRight, MessageCircle, Star, CheckCircle,
   ChevronDown, Clock, Award, Users, Shield, Plus, Minus, Camera, Package, ShoppingBag, Music,
-  Calendar, Gift, MapPin, Instagram
+  Calendar, Gift, MapPin
 } from "lucide-react";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { cmsService, serviceService, inventoryService } from "../../services";
@@ -178,7 +178,7 @@ function HeroSection({ settings, bookLink, isAuthenticated }) {
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center gap-3 px-8 py-5 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-2xl text-lg transition-all hover:-translate-y-1 hover:shadow-[0_0_30px_rgba(236,72,153,0.35)]"
           >
-            <Instagram className="w-5 h-5" />
+            <Camera className="w-5 h-5" />
             Instagram
           </a>
         </motion.div>
