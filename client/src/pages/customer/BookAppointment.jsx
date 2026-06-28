@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { CheckCircle, Sparkles, Clock, Check, ChevronRight, Calendar as CalIcon, CreditCard, Upload } from "lucide-react";
+import { CheckCircle, Sparkles, Clock, Check, ChevronRight, Calendar as CalIcon, CreditCard, Upload, Plus, X } from "lucide-react";
 import { serviceService, appointmentService, uploadService } from "../../services";
 import { QUERY_KEYS } from "../../constants/queryKeys";
 import { formatCurrency, glowPointsFromAmount } from "../../utils";
@@ -18,6 +18,8 @@ export default function BookAppointment() {
   
   const [step, setStep] = useState(0);
   const [selectedServices, setSelectedServices] = useState([]);
+  const [customServices, setCustomServices] = useState([]);
+  const [customServiceInput, setCustomServiceInput] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [notes, setNotes] = useState("");
@@ -66,13 +68,33 @@ export default function BookAppointment() {
     );
   };
 
+  const addCustomService = () => {
+    const trimmed = customServiceInput.trim();
+    if (trimmed.length < 2) {
+      toast.error("Please describe your service request (at least 2 characters)");
+      return;
+    }
+    if (customServices.some((s) => s.toLowerCase() === trimmed.toLowerCase())) {
+      toast.error("This custom service is already added");
+      return;
+    }
+    setCustomServices((prev) => [...prev, trimmed]);
+    setCustomServiceInput("");
+  };
+
+  const removeCustomService = (index) => {
+    setCustomServices((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const totalSelectedCount = selectedServices.length + customServices.length;
+
   const totalAmount = selectedServices.reduce((sum, s) => sum + s.price, 0);
   const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration, 0);
 
   const canNext = [
-    selectedServices.length > 0,
+    totalSelectedCount > 0,
     !!date && !!time,
-    paymentMethod === "Cash" || (paymentMethod === "Manual UPI" && transactionId.trim().length > 3),
+    paymentMethod === "Cash" || totalAmount === 0 || (paymentMethod === "Manual UPI" && transactionId.trim().length > 3),
     true,
   ];
 
@@ -94,6 +116,7 @@ export default function BookAppointment() {
   const handleBook = () => {
     book({
       serviceIds: selectedServices.map(s => s._id),
+      customServices,
       appointmentDate: date,
       appointmentTime: time,
       notes,
@@ -153,6 +176,45 @@ export default function BookAppointment() {
         {step === 0 && (
           <motion.div key="step0" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
             <h2 className="font-semibold text-[var(--color-text-primary)] mb-4">Select Services</h2>
+
+            <div className="mb-5 p-4 rounded-xl border border-dashed border-[var(--color-rose-500)]/40 bg-[var(--color-rose-500)]/5 space-y-3">
+              <div>
+                <p className="text-sm font-medium text-[var(--color-text-primary)]">Can't find your service?</p>
+                <p className="text-xs text-[var(--color-text-muted)] mt-0.5">Request a custom service and we'll confirm availability & pricing.</p>
+              </div>
+              <div className="flex gap-2">
+                <input
+                  value={customServiceInput}
+                  onChange={(e) => setCustomServiceInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addCustomService())}
+                  placeholder="e.g. Balayage highlights, keratin treatment..."
+                  className="flex-1 px-3 py-2.5 rounded-xl bg-[var(--color-surface-card)] border border-[var(--color-border)] text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-rose-500)]"
+                />
+                <button
+                  type="button"
+                  onClick={addCustomService}
+                  className="px-4 py-2.5 bg-[var(--color-rose-500)] hover:bg-[var(--color-rose-600)] text-white text-sm font-medium rounded-xl transition-colors flex items-center gap-1.5"
+                >
+                  <Plus className="w-4 h-4" /> Add
+                </button>
+              </div>
+              {customServices.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {customServices.map((request, index) => (
+                    <span
+                      key={`${request}-${index}`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--color-surface-card)] border border-[var(--color-rose-500)]/30 text-xs text-[var(--color-text-primary)]"
+                    >
+                      {request}
+                      <button type="button" onClick={() => removeCustomService(index)} className="text-[var(--color-text-muted)] hover:text-red-500">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {services.map(svc => {
                 const sel = selectedServices.find(s => s._id === svc._id);
@@ -177,10 +239,22 @@ export default function BookAppointment() {
                 );
               })}
             </div>
-            {selectedServices.length > 0 && (
-              <div className="mt-4 p-4 rounded-xl bg-[var(--color-surface-card)] border border-[var(--color-border)] flex justify-between items-center">
-                <p className="text-sm text-[var(--color-text-muted)]">{selectedServices.length} service{selectedServices.length > 1 ? "s" : ""} · {totalDuration} min</p>
-                <p className="font-bold text-[var(--color-rose-400)]">{formatCurrency(totalAmount)}</p>
+            {(selectedServices.length > 0 || customServices.length > 0) && (
+              <div className="mt-4 p-4 rounded-xl bg-[var(--color-surface-card)] border border-[var(--color-border)] space-y-2">
+                <div className="flex justify-between items-center">
+                  <p className="text-sm text-[var(--color-text-muted)]">
+                    {totalSelectedCount} service{totalSelectedCount > 1 ? "s" : ""} · {totalDuration} min
+                    {customServices.length > 0 && " (+ custom requests)"}
+                  </p>
+                  <p className="font-bold text-[var(--color-rose-400)]">
+                    {totalAmount > 0 ? formatCurrency(totalAmount) : "Price TBD"}
+                  </p>
+                </div>
+                {customServices.length > 0 && (
+                  <p className="text-xs text-[var(--color-text-muted)]">
+                    Custom services will be priced after admin review.
+                  </p>
+                )}
               </div>
             )}
           </motion.div>
@@ -306,6 +380,12 @@ export default function BookAppointment() {
                     <span className="text-[var(--color-rose-400)]">{formatCurrency(s.price)}</span>
                   </div>
                 ))}
+                {customServices.map((request, index) => (
+                  <div key={`custom-${index}`} className="flex justify-between py-1.5 text-sm">
+                    <span className="text-[var(--color-text-primary)]">{request} <span className="text-[var(--color-text-muted)]">(Custom)</span></span>
+                    <span className="text-[var(--color-text-muted)]">TBD</span>
+                  </div>
+                ))}
               </div>
               <div className="border-t border-[var(--color-border)] pt-3 space-y-2 text-sm">
                 <div className="flex justify-between"><span className="text-[var(--color-text-muted)]">Date</span><span className="text-[var(--color-text-primary)]">{date}</span></div>
@@ -315,7 +395,7 @@ export default function BookAppointment() {
               </div>
               <div className="border-t border-[var(--color-border)] pt-3 flex justify-between font-semibold">
                 <span className="text-[var(--color-text-primary)]">Total</span>
-                <span className="text-[var(--color-rose-400)] text-lg">{formatCurrency(totalAmount)}</span>
+                <span className="text-[var(--color-rose-400)] text-lg">{totalAmount > 0 ? formatCurrency(totalAmount) : "To be confirmed"}</span>
               </div>
               <div className="border-t border-[var(--color-border)] pt-3 text-sm flex justify-between">
                 <span className="text-[var(--color-text-muted)]">Payment Method</span>

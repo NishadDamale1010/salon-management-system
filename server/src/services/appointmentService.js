@@ -15,29 +15,39 @@ const bookAppointment = async (userId, appointmentData) => {
         throw new AppError(errors, 400);
     }
 
-    const { serviceIds, appointmentDate, appointmentTime, notes, paymentMethod, transactionId, paymentScreenshot } = validationResult.data;
+    const { serviceIds, customServices, appointmentDate, appointmentTime, notes, paymentMethod, transactionId, paymentScreenshot } = validationResult.data;
 
-    // Fetch all services
-    const services = await Service.find({ _id: { $in: serviceIds }, isActive: true });
-
-    if (services.length !== serviceIds.length) {
-        throw new AppError("One or more services are invalid or unavailable", 400);
-    }
-
+    const servicesSnapshot = [];
     let totalAmount = 0;
     let totalDuration = 0;
-    const servicesSnapshot = [];
 
-    // Calculate totals and prepare snapshot
-    services.forEach((service) => {
-        totalAmount += service.price;
-        totalDuration += service.duration;
+    if (serviceIds.length > 0) {
+        const services = await Service.find({ _id: { $in: serviceIds }, isActive: true });
 
+        if (services.length !== serviceIds.length) {
+            throw new AppError("One or more services are invalid or unavailable", 400);
+        }
+
+        services.forEach((service) => {
+            totalAmount += service.price;
+            totalDuration += service.duration;
+
+            servicesSnapshot.push({
+                service: service._id,
+                serviceName: service.name,
+                price: service.price,
+                duration: service.duration,
+                isCustom: false,
+            });
+        });
+    }
+
+    customServices.forEach((request) => {
         servicesSnapshot.push({
-            service: service._id,
-            serviceName: service.name,
-            price: service.price,
-            duration: service.duration,
+            serviceName: request,
+            price: 0,
+            duration: 30,
+            isCustom: true,
         });
     });
 

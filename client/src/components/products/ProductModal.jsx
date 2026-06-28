@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { orderService } from "../../services";
 
-export default function ProductModal({ product, isOpen, onClose }) {
+export default function ProductModal({ product, isOpen, onClose, onAddToCart }) {
   const [activeImage, setActiveImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [isReserving, setIsReserving] = useState(false);
@@ -155,6 +155,18 @@ export default function ProductModal({ product, isOpen, onClose }) {
 
             {/* Sticky Action Bar for mobile / bottom of scroll */}
             <div className="mt-8 pt-6 border-t border-[var(--color-border)] flex gap-4">
+              {onAddToCart ? (
+                <button
+                  onClick={() => {
+                    onAddToCart(product, quantity);
+                    onClose();
+                  }}
+                  disabled={product.stockQuantity < 1}
+                  className="flex-1 py-4 bg-gradient-to-r from-[var(--color-rose-500)] to-[var(--color-rose-600)] hover:from-[var(--color-rose-400)] hover:to-[var(--color-rose-500)] text-white font-bold rounded-2xl transition-all shadow-[0_4px_14px_rgba(244,63,94,0.3)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {product.stockQuantity < 1 ? "Out of Stock" : "Add to Cart"}
+                </button>
+              ) : (
               <button 
                 onClick={async () => {
                   if (!user) {
@@ -179,6 +191,7 @@ export default function ProductModal({ product, isOpen, onClose }) {
               >
                 {isReserving ? "Reserving..." : product.stockQuantity < 1 ? "Out of Stock" : "Reserve for Pickup"}
               </button>
+              )}
               
               <div className="flex bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-2xl overflow-hidden">
                 <button 

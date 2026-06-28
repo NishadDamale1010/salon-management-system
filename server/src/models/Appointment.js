@@ -12,7 +12,6 @@ const appointmentSchema = new mongoose.Schema(
                 service: {
                     type: mongoose.Schema.Types.ObjectId,
                     ref: "Service",
-                    required: true,
                 },
                 serviceName: {
                     type: String,
@@ -21,10 +20,16 @@ const appointmentSchema = new mongoose.Schema(
                 price: {
                     type: Number,
                     required: true,
+                    default: 0,
                 },
                 duration: {
                     type: Number,
                     required: true,
+                    default: 0,
+                },
+                isCustom: {
+                    type: Boolean,
+                    default: false,
                 },
             },
         ],

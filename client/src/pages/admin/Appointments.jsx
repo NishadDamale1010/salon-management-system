@@ -84,7 +84,9 @@ export default function Appointments() {
                           </div>
                           <span className="text-sm font-medium text-[var(--color-text-primary)] truncate">{a.customer?.firstName} {a.customer?.lastName}</span>
                         </div>
-                        <p className="text-xs text-[var(--color-text-muted)] truncate">{a.services?.map(s => s.serviceName).join(", ")}</p>
+                        <p className="text-xs text-[var(--color-text-muted)] truncate">
+                          {a.services?.map(s => s.isCustom ? `${s.serviceName} (Custom)` : s.serviceName).join(", ")}
+                        </p>
                         <p className="text-xs text-[var(--color-text-muted)]">{formatDate(a.appointmentDate)} · {a.appointmentTime}</p>
                         <div className="flex items-center justify-between">
                           <p className="text-sm font-bold text-[var(--color-rose-400)]">{formatCurrency(a.totalAmount)}</p>

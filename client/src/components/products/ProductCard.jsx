@@ -1,9 +1,10 @@
 import { motion } from "framer-motion";
-import { Star, ShoppingBag, Eye, Heart } from "lucide-react";
+import { Star, ShoppingBag, Eye, Plus } from "lucide-react";
 
 import { Badge } from "../ui/Badge";
+import { formatCurrency } from "../../utils";
 
-export default function ProductCard({ product, onViewDetails }) {
+export default function ProductCard({ product, onViewDetails, onAddToCart }) {
   return (
     <motion.div
       whileHover={{ y: -8 }}
@@ -22,7 +23,7 @@ export default function ProductCard({ product, onViewDetails }) {
           </div>
         )}
         <button className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-[var(--color-text-muted)] hover:text-rose-500 hover:bg-white transition-all opacity-0 translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 duration-300">
-          <Heart className="w-4 h-4" />
+          <Star className="w-4 h-4" />
         </button>
 
         <motion.img
@@ -65,14 +66,30 @@ export default function ProductCard({ product, onViewDetails }) {
         </p>
 
         <div className="mt-auto space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-base font-bold text-[var(--color-rose-400)]">{formatCurrency(product.price)}</span>
+            {(product.stockQuantity ?? 0) < 1 && (
+              <span className="text-[10px] text-red-400 font-medium">Out of stock</span>
+            )}
+          </div>
 
-          
-          <button 
-            onClick={() => onViewDetails(product)}
-            className="w-full py-2.5 bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text-primary)] font-semibold rounded-xl text-sm transition-all group-hover:bg-[var(--color-rose-500)] group-hover:text-white group-hover:border-[var(--color-rose-500)] flex items-center justify-center gap-2"
-          >
-            View Details
-          </button>
+          <div className="flex gap-2">
+            {onAddToCart && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onAddToCart(product); }}
+                disabled={(product.stockQuantity ?? 0) < 1}
+                className="flex-1 py-2.5 bg-[var(--color-rose-500)] text-white font-semibold rounded-xl text-sm transition-all hover:bg-[var(--color-rose-600)] disabled:opacity-40 flex items-center justify-center gap-1.5"
+              >
+                <Plus className="w-3.5 h-3.5" /> Add
+              </button>
+            )}
+            <button
+              onClick={() => onViewDetails(product)}
+              className={`${onAddToCart ? "flex-1" : "w-full"} py-2.5 bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text-primary)] font-semibold rounded-xl text-sm transition-all hover:border-[var(--color-rose-500)]/40 flex items-center justify-center gap-1.5`}
+            >
+              <Eye className="w-3.5 h-3.5" /> View
+            </button>
+          </div>
         </div>
       </div>
     </motion.div>

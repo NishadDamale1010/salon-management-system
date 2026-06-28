@@ -2,7 +2,7 @@ import { Link, useLocation, Outlet } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, Calendar, Gift, Trophy, Bell, User,
-  Sparkles, ShoppingBag, ShoppingCart, ChevronLeft, ChevronRight,
+  Sparkles, ShoppingBag, ChevronLeft, ChevronRight,
   LogOut, History,
 } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -12,11 +12,13 @@ import { useLogout } from "../../hooks/useAuth";
 import { useNotifications } from "../../hooks/useNotifications";
 import { SALON_NAME } from "../../constants";
 
+import { useCartStore } from "../../store/cartStore";
+
 const navItems = [
   { icon: LayoutDashboard, label: "Home", to: "/dashboard" },
   { icon: Calendar, label: "Book", to: "/book" },
   { icon: History, label: "My Appts", to: "/appointments" },
-  { icon: ShoppingCart, label: "My Cart", to: "/cart" },
+  { icon: ShoppingBag, label: "Shop", to: "/products" },
 
   { icon: Gift, label: "Rewards", to: "/rewards" },
   { icon: Trophy, label: "Leaderboard", to: "/leaderboard" },
@@ -28,6 +30,7 @@ export default function CustomerLayout() {
   const location = useLocation();
   const user = useAuthStore((s) => s.user);
   const { mutate: logout } = useLogout();
+  const cartCount = useCartStore((s) => s.getItemCount());
 
   // Mount notification listener so toasts run globally
   useNotifications();
@@ -86,12 +89,17 @@ export default function CustomerLayout() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="text-sm font-medium whitespace-nowrap"
+                      className="text-sm font-medium whitespace-nowrap flex-1"
                     >
                       {item.label}
                     </motion.span>
                   )}
                 </AnimatePresence>
+                {item.to === "/products" && cartCount > 0 && (
+                  <span className="ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--color-rose-500)] text-white text-[10px] font-bold flex items-center justify-center">
+                    {cartCount > 99 ? "99+" : cartCount}
+                  </span>
+                )}
               </Link>
             );
           })}
@@ -171,11 +179,16 @@ export default function CustomerLayout() {
             <Link
               key={item.to}
               to={item.to}
-              className="flex flex-col items-center justify-center w-full h-full space-y-1"
+              className="relative flex flex-col items-center justify-center w-full h-full space-y-1"
             >
               <item.icon
                 className={cn("w-6 h-6", active ? "text-[var(--color-rose-500)]" : "text-[var(--color-text-muted)]")}
               />
+              {item.to === "/products" && cartCount > 0 && (
+                <span className="absolute top-1 right-1/4 min-w-[14px] h-[14px] px-0.5 rounded-full bg-[var(--color-rose-500)] text-white text-[8px] font-bold flex items-center justify-center">
+                  {cartCount > 9 ? "9+" : cartCount}
+                </span>
+              )}
               <span className={cn("text-[10px] font-medium", active ? "text-[var(--color-rose-500)]" : "text-[var(--color-text-muted)]")}>
                 {item.label}
               </span>

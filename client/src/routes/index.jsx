@@ -30,7 +30,7 @@ const RedeemHistory = lazy(() => import("../pages/customer/RedeemHistory"));
 const Leaderboard = lazy(() => import("../pages/customer/Leaderboard"));
 const NotificationsPage = lazy(() => import("../pages/customer/Notifications"));
 const CustomerProfile = lazy(() => import("../pages/customer/Profile"));
-const CustomerCart = lazy(() => import("../pages/customer/Cart"));
+const CustomerShop = lazy(() => import("../pages/customer/Shop"));
 
 // Admin Pages
 const AdminDashboard = lazy(() => import("../pages/admin/Dashboard"));
@@ -96,7 +96,8 @@ const router = createBrowserRouter([
           { path: "/leaderboard", element: <Suspense fallback={<PageLoader />}><Leaderboard /></Suspense> },
           { path: "/notifications", element: <Suspense fallback={<PageLoader />}><NotificationsPage /></Suspense> },
           { path: "/profile", element: <Suspense fallback={<PageLoader />}><CustomerProfile /></Suspense> },
-          { path: "/cart", element: <Suspense fallback={<PageLoader />}><CustomerCart /></Suspense> },
+          { path: "/products", element: <Suspense fallback={<PageLoader />}><CustomerShop /></Suspense> },
+          { path: "/cart", element: <Navigate to="/products" replace /> },
         ],
       },
     ],
