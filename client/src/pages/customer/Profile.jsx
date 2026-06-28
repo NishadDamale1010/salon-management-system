@@ -1,12 +1,13 @@
 import { useAuthStore } from "../../store/authStore";
 import { motion } from "framer-motion";
-import { User, Mail, Phone, Sparkles, Calendar, Edit2, Check, X, Camera } from "lucide-react";
+import { User, Mail, Phone, Sparkles, Calendar, Edit2, Check, X, Camera, LogOut } from "lucide-react";
 import { formatDate, getMembershipColor, getInitials } from "../../utils";
 import { Badge } from "../../components/ui/Badge";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { authService, uploadService } from "../../services";
 import { toast } from "sonner";
+import { useLogout } from "../../hooks/useAuth";
 
 export default function Profile() {
   const user = useAuthStore((s) => s.user);
@@ -21,6 +22,7 @@ export default function Profile() {
     avatar: user?.avatar || "",
   });
   const [isUploading, setIsUploading] = useState(false);
+  const { mutate: logout } = useLogout();
 
   const { mutate: updateProfile, isPending } = useMutation({
     mutationFn: authService.updateMe,
@@ -210,6 +212,13 @@ export default function Profile() {
           </div>
         )}
       </div>
+
+      <button
+        onClick={() => logout()}
+        className="w-full mt-8 py-3 rounded-2xl flex items-center justify-center gap-2 text-red-500 bg-red-50 hover:bg-red-100 transition-colors font-medium border border-red-100"
+      >
+        <LogOut className="w-5 h-5" /> Log Out
+      </button>
     </div>
   );
 }
