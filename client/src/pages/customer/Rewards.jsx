@@ -40,7 +40,7 @@ export default function Rewards() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {isLoading ? Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />) :
           rewards.map((reward, i) => {
-            const canRedeem = (user?.glowPoints || 0) >= reward.pointsRequired && reward.isActive && reward.stock > 0;
+            const canRedeem = (user?.glowPoints || 0) >= reward.glowPointsRequired && reward.isActive;
             return (
               <motion.div key={reward._id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
                 className={`rounded-2xl bg-[var(--color-surface-card)] border p-5 flex flex-col transition-all ${canRedeem ? "border-[var(--color-rose-500)]/30 hover:shadow-[var(--shadow-card-hover)]" : "border-[var(--color-border)] opacity-60"}`}
@@ -53,16 +53,16 @@ export default function Rewards() {
                 <p className="text-sm text-[var(--color-text-muted)] mt-1 flex-1">{reward.description}</p>
                 <div className="flex items-center justify-between mt-4 mb-3">
                   <div className="flex items-center gap-1 text-yellow-400 font-bold">
-                    <Sparkles className="w-4 h-4" />{reward.pointsRequired} pts
+                    <Sparkles className="w-4 h-4" />{reward.glowPointsRequired} pts
                   </div>
-                  <Badge variant="ghost">Stock: {reward.stock}</Badge>
+                  <Badge variant="ghost">Save ₹{reward.discountAmount}</Badge>
                 </div>
                 <button
                   onClick={() => redeem(reward._id)}
                   disabled={!canRedeem || isPending}
                   className={`w-full py-2.5 rounded-xl text-sm font-medium transition-all ${canRedeem ? "-white hover:shadow-[var(--shadow-glow-rose)]" : "bg-[var(--color-surface-3)] text-[var(--color-text-muted)] cursor-not-allowed"}`}
                 >
-                  {!reward.isActive ? "Unavailable" : reward.stock === 0 ? "Out of Stock" : !canRedeem ? `Need ${reward.pointsRequired - (user?.glowPoints || 0)} more pts` : "Redeem Now"}
+                  {!reward.isActive ? "Unavailable" : !canRedeem ? `Need ${reward.glowPointsRequired - (user?.glowPoints || 0)} more pts` : "Redeem Now"}
                 </button>
               </motion.div>
             );
