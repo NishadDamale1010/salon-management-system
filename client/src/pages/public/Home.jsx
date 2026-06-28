@@ -3,9 +3,10 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   Sparkles, Calendar, Star, Trophy, ShieldCheck,
   Gift, ShoppingBag, Tag, Users, Activity, Crown,
-  ArrowRight, Video
+  ArrowRight, Video, Instagram, MessageCircle
 } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
+import { SALON_WHATSAPP, SALON_INSTAGRAM } from "../../constants";
 
 const QuickLink = ({ icon: Icon, label, subtext, to }) => (
   <Link to={to} className="flex flex-col items-center p-4 bg-[var(--color-surface)] hover:bg-[var(--color-surface-2)] rounded-3xl transition-all min-w-[100px] text-center border border-[var(--color-border)] hover:border-[var(--color-rose-300)] hover:shadow-sm">
@@ -87,24 +88,16 @@ export default function Home() {
               </Link>
             </div>
             
-            {/* Stats Row */}
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-6 md:gap-10 pt-8 border-t border-[var(--color-border)] mt-8">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-rose-50 text-[var(--color-rose-500)] flex items-center justify-center"><Users className="w-5 h-5"/></div>
-                <div><div className="font-bold text-[var(--color-text-primary)]">2,500+</div><div className="text-xs text-[var(--color-text-muted)]">Happy Customers</div></div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-rose-50 text-[var(--color-rose-500)] flex items-center justify-center"><Star className="w-5 h-5"/></div>
-                <div><div className="font-bold text-[var(--color-text-primary)]">4.9 <Star className="w-3 h-3 inline text-yellow-400 fill-yellow-400"/></div><div className="text-xs text-[var(--color-text-muted)]">Google Rating</div></div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-rose-50 text-[var(--color-rose-500)] flex items-center justify-center"><Trophy className="w-5 h-5"/></div>
-                <div><div className="font-bold text-[var(--color-text-primary)]">25+</div><div className="text-xs text-[var(--color-text-muted)]">Expert Stylists</div></div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-rose-50 text-[var(--color-rose-500)] flex items-center justify-center"><ShieldCheck className="w-5 h-5"/></div>
-                <div><div className="font-bold text-[var(--color-text-primary)]">100%</div><div className="text-xs text-[var(--color-text-muted)]">Safe & Hygienic</div></div>
-              </div>
+            {/* Social Links Row */}
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 pt-8 border-t border-[var(--color-border)] mt-8">
+              <a href={SALON_INSTAGRAM} target="_blank" rel="noreferrer" className="flex items-center gap-3 px-5 py-2.5 bg-rose-50 hover:bg-rose-100 rounded-2xl transition-colors border border-rose-100">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-yellow-400 via-rose-500 to-purple-500 text-white flex items-center justify-center"><Instagram className="w-4 h-4"/></div>
+                <div className="font-semibold text-rose-900 text-sm">Follow us on Instagram</div>
+              </a>
+              <a href={`https://wa.me/${SALON_WHATSAPP}`} target="_blank" rel="noreferrer" className="flex items-center gap-3 px-5 py-2.5 bg-emerald-50 hover:bg-emerald-100 rounded-2xl transition-colors border border-emerald-100">
+                <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center"><MessageCircle className="w-4 h-4"/></div>
+                <div className="font-semibold text-emerald-900 text-sm">Chat on WhatsApp</div>
+              </a>
             </div>
           </div>
 
