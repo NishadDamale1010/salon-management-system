@@ -62,7 +62,8 @@ const bookAppointment = async (userId, appointmentData) => {
         userId,
         "Appointment",
         "Booking Requested 📅",
-        `Your appointment request for ${appointmentDate} at ${appointmentTime} has been received and is pending confirmation.`
+        `Your appointment request for ${appointmentDate} at ${appointmentTime} has been received and is pending confirmation.`,
+        { route: `/appointments/${appointment._id}` }
     ).catch(console.error);
 
     // Notify Admins
@@ -72,7 +73,8 @@ const bookAppointment = async (userId, appointmentData) => {
             admin._id,
             "Appointment",
             "New Booking Request 🛎️",
-            `A new appointment has been requested for ${appointmentDate} at ${appointmentTime}.`
+            `A new appointment has been requested for ${appointmentDate} at ${appointmentTime}.`,
+            { route: "/admin/appointments" }
         ).catch(console.error);
     }
 
@@ -184,7 +186,7 @@ const updateAppointmentStatus = async (appointmentId, updateData) => {
             const message = `Sorry, your appointment on ${new Date(appointment.appointmentDate).toDateString()} at ${appointment.appointmentTime} was declined.${reasonText}${rescheduleText}`;
             
             // Sorry Card Notification
-            notificationService.createNotification(appointment.customer._id, "Appointment", title, message).catch(console.error);
+            notificationService.createNotification(appointment.customer._id, "Appointment", title, message, { route: `/appointments/${appointment._id}` }).catch(console.error);
             
             // Send Email
             if (appointment.customer.email) {

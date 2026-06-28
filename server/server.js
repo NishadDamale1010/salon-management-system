@@ -1,5 +1,7 @@
 const express = require("express");
 const dotenv = require("dotenv");
+dotenv.config();
+
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const errorMiddleware = require("./src/middleware/errorMiddleware");
@@ -18,8 +20,6 @@ const paymentRoutes = require("./src/routes/paymentRoutes");
 const inventoryRoutes = require("./src/routes/inventoryRoutes");
 const aiRoutes = require("./src/routes/aiRoutes");
 const orderRoutes = require("./src/routes/orderRoutes");
-
-dotenv.config();
 
 const app = express();
 

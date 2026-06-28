@@ -1,7 +1,16 @@
 import { initializeApp } from "firebase/app";
-import { getMessaging, getToken, onMessage } from "firebase/messaging";
+import { getMessaging, getToken, isSupported, onMessage } from "firebase/messaging";
 
-const cleanEnv = (val) => val ? val.replace(/^"|"$/g, '').trim() : undefined;
+const cleanEnv = (val) => val ? val.replace(/^"|"$/g, "").trim() : undefined;
+const isDev = import.meta.env.DEV;
+
+const logDev = (...args) => {
+    if (isDev) console.info(...args);
+};
+
+const warnDev = (...args) => {
+    if (isDev) console.warn(...args);
+};
 
 const firebaseConfig = {
     apiKey: cleanEnv(import.meta.env.VITE_FIREBASE_API_KEY),
@@ -13,62 +22,96 @@ const firebaseConfig = {
 };
 
 let app;
-let messaging;
+let messagingPromise;
 
 try {
-    // Only initialize if config is present to prevent crashing if user hasn't set env vars yet
-    if (firebaseConfig.apiKey) {
+    if (firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.messagingSenderId && firebaseConfig.appId) {
         app = initializeApp(firebaseConfig);
-        messaging = getMessaging(app);
     } else {
-        console.warn("⚠️ Firebase configuration is missing. Push notifications will not work.");
+        warnDev("Firebase web configuration is missing. Push notifications are disabled.");
     }
 } catch (error) {
-    console.error("🔥 Error initializing Firebase:", error);
+    warnDev("Error initializing Firebase:", error);
 }
+
+const hasNotificationSupport = () => (
+    typeof window !== "undefined" &&
+    "Notification" in window &&
+    "serviceWorker" in navigator &&
+    (window.isSecureContext || window.location.hostname === "localhost")
+);
+
+const getMessagingInstance = async () => {
+    if (!app || !hasNotificationSupport()) return null;
+
+    if (!messagingPromise) {
+        messagingPromise = isSupported()
+            .then((supported) => supported ? getMessaging(app) : null)
+            .catch((error) => {
+                warnDev("Firebase Messaging is not supported in this browser:", error);
+                return null;
+            });
+    }
+
+    return messagingPromise;
+};
+
+export const getNotificationPermissionStatus = () => {
+    if (typeof window === "undefined" || !("Notification" in window)) {
+        return "unsupported";
+    }
+
+    if (!("serviceWorker" in navigator) || (!window.isSecureContext && window.location.hostname !== "localhost")) {
+        return "unsupported";
+    }
+
+    return Notification.permission;
+};
 
 export const requestFirebaseNotificationPermission = async () => {
     try {
-        if (!messaging) throw new Error("Firebase Messaging not initialized");
+        const messaging = await getMessagingInstance();
+        if (!messaging) return null;
 
-        console.log("Requesting notification permission...");
-        const permission = await Notification.requestPermission();
-        
-        if (permission === "granted") {
-            const vapidKey = cleanEnv(import.meta.env.VITE_VAPID_PUBLIC_KEY) || cleanEnv(import.meta.env.VITE_FIREBASE_VAPID_KEY);
-            if (!vapidKey) {
-                console.warn("VITE_FIREBASE_VAPID_KEY is not defined.");
-            }
+        const permission = Notification.permission === "granted"
+            ? "granted"
+            : await Notification.requestPermission();
 
-            // Use the active service worker registration from Vite PWA
-            const registration = await navigator.serviceWorker.ready;
-
-            const currentToken = await getToken(messaging, { 
-                vapidKey,
-                serviceWorkerRegistration: registration 
-            });
-            if (currentToken) {
-                return currentToken;
-            } else {
-                console.warn("No registration token available. Request permission to generate one.");
-                return null;
-            }
-        } else {
-            console.warn("Notification permission denied.");
+        if (permission !== "granted") {
+            warnDev("Notification permission was not granted.");
             return null;
         }
-    } catch (err) {
-        console.error("An error occurred while retrieving token:", err);
+
+        const vapidKey = cleanEnv(import.meta.env.VITE_VAPID_PUBLIC_KEY) || cleanEnv(import.meta.env.VITE_FIREBASE_VAPID_KEY);
+        if (!vapidKey) {
+            warnDev("VITE_VAPID_PUBLIC_KEY or VITE_FIREBASE_VAPID_KEY is not defined.");
+            return null;
+        }
+
+        const registration = await navigator.serviceWorker.ready;
+        const currentToken = await getToken(messaging, {
+            vapidKey,
+            serviceWorkerRegistration: registration,
+        });
+
+        if (!currentToken) {
+            warnDev("No Firebase registration token was returned.");
+            return null;
+        }
+
+        logDev("Firebase notification token retrieved.");
+        return currentToken;
+    } catch (error) {
+        warnDev("An error occurred while retrieving the Firebase token:", error);
         return null;
     }
 };
 
-export const onMessageListener = () =>
-    new Promise((resolve) => {
-        if (!messaging) return;
-        onMessage(messaging, (payload) => {
-            resolve(payload);
-        });
-    });
+export const subscribeToForegroundMessages = async (handler) => {
+    const messaging = await getMessagingInstance();
+    if (!messaging) return () => {};
 
-export { app, messaging };
+    return onMessage(messaging, handler);
+};
+
+export { app };

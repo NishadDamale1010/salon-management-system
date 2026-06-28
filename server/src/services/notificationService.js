@@ -4,14 +4,20 @@ const AppError = require("../utils/AppError");
 const { getApps } = require("firebase-admin/app");
 const { getMessaging } = require("firebase-admin/messaging");
 
-// We still need to require firebaseAdmin to ensure it initializes
 require("../firebase/firebaseAdmin");
 
-/**
- * Save notification to MongoDB
- */
+const isDev = process.env.NODE_ENV !== "production";
+const warnDev = (...args) => {
+    if (isDev) console.warn(...args);
+};
+
+const INVALID_TOKEN_CODES = new Set([
+    "messaging/invalid-registration-token",
+    "messaging/registration-token-not-registered",
+]);
+
 const saveDatabaseNotification = async (userId, type, title, body, options = {}) => {
-    return await Notification.create({
+    return Notification.create({
         user: userId,
         type,
         title,
@@ -22,193 +28,163 @@ const saveDatabaseNotification = async (userId, type, title, body, options = {})
     });
 };
 
-/**
- * Send FCM push notification to a specific token
- */
-const sendNotification = async (token, title, body, data = {}) => {
-    if (getApps().length === 0) return false;
+const getFirebaseMessaging = () => {
+    if (getApps().length === 0) return null;
+    return getMessaging();
+};
+
+const stringifyData = (data) => {
+    return Object.entries(data).reduce((acc, [key, value]) => {
+        if (value !== undefined && value !== null) {
+            acc[key] = String(value);
+        }
+        return acc;
+    }, {});
+};
+
+const buildPayloadData = ({ type, title, body, options = {}, notificationId }) => {
+    return stringifyData({
+        title,
+        body,
+        type: type || "System",
+        route: options.route || "/notifications",
+        icon: options.icon,
+        image: options.image,
+        notificationId,
+    });
+};
+
+const cleanupInvalidTokens = async (tokens, responses) => {
+    const failedTokens = [];
+
+    responses.forEach((response, index) => {
+        if (!response.success && INVALID_TOKEN_CODES.has(response.error?.code)) {
+            failedTokens.push(tokens[index]);
+        }
+    });
+
+    if (failedTokens.length > 0) {
+        await FCMToken.deleteMany({ token: { $in: failedTokens } });
+    }
+};
+
+const sendToTokens = async (tokens, data) => {
+    const messaging = getFirebaseMessaging();
+    if (!messaging || tokens.length === 0) return false;
+
+    const chunks = [];
+    for (let i = 0; i < tokens.length; i += 500) {
+        chunks.push(tokens.slice(i, i + 500));
+    }
 
     try {
-        const message = {
-            notification: {
-                title,
-                body,
-                ...(data.image && { image: data.image })
-            },
-            android: {
-                notification: {
-                    sound: 'default'
-                }
-            },
-            apns: {
-                payload: {
-                    aps: {
-                        sound: 'default'
-                    }
-                }
-            },
-            data: {
-                click_action: "FLUTTER_NOTIFICATION_CLICK", // for cross-platform support
-                route: data.route || "/",
-                type: data.type || "System"
-            },
-            token,
-        };
+        for (const chunk of chunks) {
+            const response = await messaging.sendEachForMulticast({
+                tokens: chunk,
+                data,
+                webpush: {
+                    headers: {
+                        Urgency: "high",
+                    },
+                },
+            });
 
-        const response = await getMessaging().send(message);
-        console.log("Successfully sent FCM message:", response);
+            if (response.failureCount > 0) {
+                await cleanupInvalidTokens(chunk, response.responses);
+            }
+        }
+
         return true;
     } catch (error) {
-        console.error("Error sending FCM message:", error);
-        
-        // Handle invalid tokens
-        if (error.code === 'messaging/invalid-registration-token' || error.code === 'messaging/registration-token-not-registered') {
-            await FCMToken.deleteOne({ token });
-        }
-        
+        warnDev("Error sending FCM multicast:", error);
         return false;
     }
 };
 
-/**
- * Send push notification to a single user (all their devices)
- */
-const sendToUser = async (userId, type, title, body, options = {}) => {
-    // 1. Save to DB
-    const dbNotification = await saveDatabaseNotification(userId, type, title, body, options);
+const sendNotification = async (token, title, body, data = {}) => {
+    const messaging = getFirebaseMessaging();
+    if (!messaging) return false;
 
-    // 2. Fetch all FCM tokens for user
-    const userTokens = await FCMToken.find({ user: userId });
-    
-    if (userTokens.length > 0 && getApps().length > 0) {
-        const tokens = userTokens.map(t => t.token);
-        
-        const message = {
-            notification: {
+    try {
+        await messaging.send({
+            token,
+            data: buildPayloadData({
+                type: data.type,
                 title,
                 body,
-                ...(options.image && { image: options.image })
+                options: data,
+                notificationId: data.notificationId,
+            }),
+            webpush: {
+                headers: {
+                    Urgency: "high",
+                },
             },
-            android: {
-                notification: {
-                    sound: 'default'
-                }
-            },
-            apns: {
-                payload: {
-                    aps: {
-                        sound: 'default'
-                    }
-                }
-            },
-            data: {
-                route: options.route || "/",
-                type: type || "System",
-                notificationId: dbNotification._id.toString()
-            },
-            tokens,
-        };
+        });
 
-        try {
-            const response = await getMessaging().sendEachForMulticast(message);
-            
-            // Clean up invalid tokens
-            if (response.failureCount > 0) {
-                const failedTokens = [];
-                response.responses.forEach((resp, idx) => {
-                    if (!resp.success) {
-                        if (resp.error.code === 'messaging/invalid-registration-token' || 
-                            resp.error.code === 'messaging/registration-token-not-registered') {
-                            failedTokens.push(tokens[idx]);
-                        }
-                    }
-                });
-                
-                if (failedTokens.length > 0) {
-                    await FCMToken.deleteMany({ token: { $in: failedTokens } });
-                }
-            }
-        } catch (error) {
-            console.error("Error sending multicast message:", error);
+        return true;
+    } catch (error) {
+        if (INVALID_TOKEN_CODES.has(error.code)) {
+            await FCMToken.deleteOne({ token });
+        } else {
+            warnDev("Error sending FCM message:", error);
         }
+
+        return false;
     }
+};
+
+const sendToUser = async (userId, type, title, body, options = {}) => {
+    const dbNotification = await saveDatabaseNotification(userId, type, title, body, options);
+    const userTokens = await FCMToken.find({ user: userId });
+    const tokens = userTokens.map((item) => item.token);
+
+    await sendToTokens(tokens, buildPayloadData({
+        type,
+        title,
+        body,
+        options,
+        notificationId: dbNotification._id,
+    }));
 
     return dbNotification;
 };
 
-/**
- * Send push notification to multiple users
- */
 const sendToMany = async (userIds, type, title, body, options = {}) => {
     const dbNotifications = [];
-    
+
     for (const userId of userIds) {
-        dbNotifications.push(
-            await saveDatabaseNotification(userId, type, title, body, options)
-        );
+        dbNotifications.push(await saveDatabaseNotification(userId, type, title, body, options));
     }
 
     const userTokens = await FCMToken.find({ user: { $in: userIds } });
-    
-    if (userTokens.length > 0 && getApps().length > 0) {
-        const tokens = userTokens.map(t => t.token);
-        
-        const message = {
-            notification: {
-                title,
-                body,
-                ...(options.image && { image: options.image })
-            },
-            android: {
-                notification: {
-                    sound: 'default'
-                }
-            },
-            apns: {
-                payload: {
-                    aps: {
-                        sound: 'default'
-                    }
-                }
-            },
-            data: {
-                route: options.route || "/",
-                type: type || "System"
-            },
-            tokens,
-        };
+    const tokensByUser = new Map();
 
-        try {
-            const response = await getMessaging().sendEachForMulticast(message);
-            
-            if (response.failureCount > 0) {
-                const failedTokens = [];
-                response.responses.forEach((resp, idx) => {
-                    if (!resp.success && 
-                        (resp.error.code === 'messaging/invalid-registration-token' || 
-                         resp.error.code === 'messaging/registration-token-not-registered')) {
-                        failedTokens.push(tokens[idx]);
-                    }
-                });
-                
-                if (failedTokens.length > 0) {
-                    await FCMToken.deleteMany({ token: { $in: failedTokens } });
-                }
-            }
-        } catch (error) {
-            console.error("Error sending bulk multicast:", error);
-        }
+    userTokens.forEach((item) => {
+        const userId = item.user.toString();
+        const tokens = tokensByUser.get(userId) || [];
+        tokens.push(item.token);
+        tokensByUser.set(userId, tokens);
+    });
+
+    for (const dbNotification of dbNotifications) {
+        const tokens = tokensByUser.get(dbNotification.user.toString()) || [];
+        await sendToTokens(tokens, buildPayloadData({
+            type,
+            title,
+            body,
+            options,
+            notificationId: dbNotification._id,
+        }));
     }
-    
+
     return dbNotifications;
 };
 
-// Compatibility wrapper for old createNotification calls
-const createNotification = async (userId, type, title, body) => {
-    return await sendToUser(userId, type, title, body);
+const createNotification = async (userId, type, title, body, options = {}) => {
+    return sendToUser(userId, type, title, body, options);
 };
 
-// Existing logic for retrieving/managing notifications
 const getUserNotifications = async (userId) => {
     return Notification.find({ user: userId }).sort("-createdAt").limit(50);
 };
@@ -217,8 +193,9 @@ const markAsRead = async (userId, notificationId) => {
     const notification = await Notification.findOneAndUpdate(
         { _id: notificationId, user: userId },
         { isRead: true },
-        { returnDocument: 'after' }
+        { returnDocument: "after" }
     );
+
     if (!notification) throw new AppError("Notification not found", 404);
     return notification;
 };
@@ -239,9 +216,9 @@ module.exports = {
     sendNotification,
     sendToUser,
     sendToMany,
-    createNotification, // Kept for backwards compatibility
+    createNotification,
     getUserNotifications,
     markAsRead,
     markAllAsRead,
-    deleteNotification
+    deleteNotification,
 };
