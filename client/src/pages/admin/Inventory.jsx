@@ -13,10 +13,11 @@ export default function Inventory() {
   const qc = useQueryClient();
   const [txModal, setTxModal] = useState(null);
   const [createModal, setCreateModal] = useState(false);
+  const [editId, setEditId] = useState(null);
   const [bulkModal, setBulkModal] = useState(false);
   const [bulkText, setBulkText] = useState("");
   const [parsedProducts, setParsedProducts] = useState(null);
-  const emptyProductForm = { name: "", sku: "", brand: "", category: "", description: "", size: "", keyIngredients: "", benefits: "", unit: "", stockQuantity: 0, lowStockThreshold: 5 };
+  const emptyProductForm = { name: "", sku: "", brand: "", category: "", description: "", size: "", keyIngredients: "", benefits: "", unit: "", stockQuantity: 0, lowStockThreshold: 5, imageUrl: "" };
   const [form, setForm] = useState(emptyProductForm);
   const [tx, setTx] = useState({ type: "Restock", quantity: 1, reason: "" });
 
@@ -32,6 +33,7 @@ export default function Inventory() {
   });
 
   const { mutate: create } = useMutation({ mutationFn: (data) => inventoryService.createProduct(normalizeProductForm(data)), onSuccess: () => { toast.success("Product created!"); qc.invalidateQueries({ queryKey: QUERY_KEYS.INVENTORY }); setCreateModal(false); }, onError: err => toast.error(err.message) });
+  const { mutate: update } = useMutation({ mutationFn: ({ id, data }) => inventoryService.updateProduct(id, normalizeProductForm(data)), onSuccess: () => { toast.success("Product updated!"); qc.invalidateQueries({ queryKey: QUERY_KEYS.INVENTORY }); setCreateModal(false); setEditId(null); }, onError: err => toast.error(err.message) });
   const { mutate: logTx } = useMutation({ mutationFn: ({ id, data }) => inventoryService.logTransaction(id, data), onSuccess: () => { toast.success("Stock updated!"); qc.invalidateQueries({ queryKey: QUERY_KEYS.INVENTORY }); setTxModal(null); }, onError: err => toast.error(err.message) });
 
   const updateParsedProduct = (index, field, value) => {
@@ -69,7 +71,7 @@ export default function Inventory() {
           <button onClick={() => setBulkModal(true)} className="flex items-center gap-2 px-5 py-2.5 bg-[var(--color-surface-card)] border border-[var(--color-rose-300)] text-[var(--color-rose-600)] text-sm font-bold rounded-xl transition-all hover:bg-[var(--color-rose-50)]">
             <Sparkles className="w-4 h-4" /> AI Bulk Entry
           </button>
-          <button onClick={() => { setForm(emptyProductForm); setCreateModal(true); }} className="flex items-center gap-2 px-5 py-2.5 -white text-sm font-medium rounded-xl transition-all">
+          <button onClick={() => { setForm(emptyProductForm); setEditId(null); setCreateModal(true); }} className="flex items-center gap-2 px-5 py-2.5 -white text-sm font-medium rounded-xl transition-all">
             <Plus className="w-4 h-4" /> Add Product
           </button>
         </div>
@@ -85,23 +87,35 @@ export default function Inventory() {
                 className="rounded-2xl bg-[var(--color-surface-card)] border border-[var(--color-border)] p-5"
               >
                 <div className="flex items-start justify-between flex-wrap gap-3 mb-3">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-[var(--color-text-primary)]">{p.name}</h3>
-                      {isLow && <Badge variant="error">Low Stock!</Badge>}
+                  <div className="flex gap-4">
+                    {p.imageUrl && <img src={p.imageUrl} alt={p.name} className="w-16 h-16 object-cover rounded-xl border border-[var(--color-border)]" />}
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-[var(--color-text-primary)]">{p.name}</h3>
+                        {isLow && <Badge variant="error">Low Stock!</Badge>}
+                      </div>
+                      <p className="text-xs text-[var(--color-text-muted)]">SKU: {p.sku} · {p.brand || "Salon Product"} · {p.category}{p.size ? ` · ${p.size}` : ""}</p>
+                      {p.description && <p className="text-sm text-[var(--color-text-secondary)] mt-2 max-w-3xl">{p.description}</p>}
+                      {p.keyIngredients?.length > 0 && <p className="text-xs text-[var(--color-text-muted)] mt-2">Key ingredients: {p.keyIngredients.join(", ")}</p>}
                     </div>
-                    <p className="text-xs text-[var(--color-text-muted)]">SKU: {p.sku} · {p.brand || "Salon Product"} · {p.category}{p.size ? ` · ${p.size}` : ""}</p>
-                    {p.description && <p className="text-sm text-[var(--color-text-secondary)] mt-2 max-w-3xl">{p.description}</p>}
-                    {p.keyIngredients?.length > 0 && <p className="text-xs text-[var(--color-text-muted)] mt-2">Key ingredients: {p.keyIngredients.join(", ")}</p>}
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="text-right">
+                    <div className="text-right mr-2">
                       <p className="text-xl font-bold text-[var(--color-text-primary)]">{p.stockQuantity}</p>
                       <p className="text-xs text-[var(--color-text-muted)]">{p.unit}</p>
                     </div>
-                    <button onClick={() => { setTxModal(p); setTx({ type: "Restock", quantity: 1, reason: "" }); }} className="px-3 py-1.5 bg-[var(--color-rose-600)]/10 border border-[var(--color-rose-500)]/30 text-[var(--color-rose-400)] text-xs rounded-lg hover:bg-[var(--color-rose-600)]/20 transition-all">
-                      Update
-                    </button>
+                    <div className="flex flex-col gap-2">
+                      <button onClick={() => { setTxModal(p); setTx({ type: "Restock", quantity: 1, reason: "" }); }} className="px-3 py-1.5 bg-[var(--color-rose-600)]/10 border border-[var(--color-rose-500)]/30 text-[var(--color-rose-400)] text-xs rounded-lg hover:bg-[var(--color-rose-600)]/20 transition-all font-medium">
+                        Stock
+                      </button>
+                      <button onClick={() => { 
+                        setForm({ ...emptyProductForm, ...p, keyIngredients: p.keyIngredients?.join(", ") || "", benefits: p.benefits?.join(", ") || "" }); 
+                        setEditId(p._id); 
+                        setCreateModal(true); 
+                      }} className="px-3 py-1.5 bg-[var(--color-surface-3)] border border-[var(--color-border)] text-[var(--color-text-secondary)] text-xs rounded-lg hover:bg-[var(--color-surface-4)] transition-all font-medium">
+                        Edit
+                      </button>
+                    </div>
                   </div>
                 </div>
                 <div className="w-full bg-[var(--color-surface-3)] rounded-full h-1.5">
@@ -141,13 +155,14 @@ export default function Inventory() {
         </div>
       </Modal>
 
-      <Modal open={createModal} onClose={() => setCreateModal(false)} title="Add Product">
-        <div className="space-y-4">
+      <Modal open={createModal} onClose={() => { setCreateModal(false); setEditId(null); }} title={editId ? "Edit Product" : "Add Product"}>
+        <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
           {[
             { key: "name", label: "Product Name", placeholder: "Shampoo Premium" },
             { key: "sku", label: "SKU", placeholder: "SHMP-001" },
             { key: "brand", label: "Brand", placeholder: "SSCP Herbals" },
             { key: "category", label: "Category", placeholder: "Hair Care" },
+            { key: "imageUrl", label: "Image URL", placeholder: "https://example.com/image.jpg" },
             { key: "description", label: "Description", placeholder: "Short product description" },
             { key: "size", label: "Size", placeholder: "200 ml" },
             { key: "keyIngredients", label: "Key Ingredients", placeholder: "Aloe Vera, Neem, Tea Tree" },
@@ -163,9 +178,9 @@ export default function Inventory() {
               />
             </div>
           ))}
-          <div className="flex gap-3">
-            <button onClick={() => setCreateModal(false)} className="flex-1 py-2.5 border border-[var(--color-border)] text-[var(--color-text-secondary)] rounded-xl">Cancel</button>
-            <button onClick={() => create(form)} className="flex-1 py-2.5 -white font-medium rounded-xl transition-all">Create</button>
+          <div className="flex gap-3 pt-4 sticky bottom-0 bg-[var(--color-surface-card)]">
+            <button onClick={() => { setCreateModal(false); setEditId(null); }} className="flex-1 py-2.5 border border-[var(--color-border)] text-[var(--color-text-secondary)] rounded-xl">Cancel</button>
+            <button onClick={() => editId ? update({ id: editId, data: form }) : create(form)} className="flex-1 py-2.5 -white font-medium rounded-xl transition-all">{editId ? "Save Changes" : "Create"}</button>
           </div>
         </div>
       </Modal>
