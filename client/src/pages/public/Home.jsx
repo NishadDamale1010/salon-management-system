@@ -11,6 +11,7 @@ import { QUERY_KEYS } from "../../constants/queryKeys";
 import { SALON_NAME, SALON_TAGLINE, SALON_WHATSAPP, SALON_INSTAGRAM } from "../../constants";
 import { formatCurrency } from "../../utils";
 import AIConsultant from "../../components/ai/AIConsultant";
+import SocialProofPopup from "../../components/ui/SocialProofPopup";
 
 // ==================== NUMBER COUNTER ====================
 function CountUp({ end, suffix = "", duration = 2000 }) {
@@ -953,6 +954,7 @@ export default function Home() {
       <CTASection />
       
       <MusicPlayer />
+      <SocialProofPopup />
 
       {/* WhatsApp Float Button */}
       <motion.a
