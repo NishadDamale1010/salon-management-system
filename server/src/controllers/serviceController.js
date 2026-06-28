@@ -7,6 +7,17 @@ const createService = asyncHandler(async (req, res) => {
     sendResponse(res, 201, true, "Service created successfully", service);
 });
 
+const createBulkServices = asyncHandler(async (req, res) => {
+    const { services } = req.body;
+    const result = await serviceService.createBulkServices(services);
+    
+    if (result.errorCount > 0 && result.successCount === 0) {
+        return sendResponse(res, 400, false, "Failed to create services", result);
+    }
+    
+    sendResponse(res, 201, true, `Created ${result.successCount} services successfully`, result);
+});
+
 const updateService = asyncHandler(async (req, res) => {
     const service = await serviceService.updateService(req.params.id, req.body);
     sendResponse(res, 200, true, "Service updated successfully", service);
@@ -29,6 +40,7 @@ const getSingleService = asyncHandler(async (req, res) => {
 
 module.exports = {
     createService,
+    createBulkServices,
     updateService,
     deleteService,
     getAllServices,

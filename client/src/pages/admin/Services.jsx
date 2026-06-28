@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Plus, Pencil, Trash2, Clock, Sparkles } from "lucide-react";
-import { serviceService, uploadService } from "../../services";
+import { serviceService, uploadService, aiService } from "../../services";
 import { QUERY_KEYS } from "../../constants/queryKeys";
 import { formatCurrency } from "../../utils";
 import { Modal } from "../../components/ui/Modal";
@@ -16,6 +16,10 @@ export default function Services() {
   const [modal, setModal] = useState(null); // null | 'create' | service object
   const [form, setForm] = useState(emptyForm);
   const [uploading, setUploading] = useState(false);
+
+  const [bulkModal, setBulkModal] = useState(false);
+  const [bulkText, setBulkText] = useState("");
+  const [parsedServices, setParsedServices] = useState(null);
 
   const { data, isLoading } = useQuery({ queryKey: QUERY_KEYS.SERVICES, queryFn: serviceService.getAll });
   const services = data?.data || [];
@@ -36,18 +40,56 @@ export default function Services() {
     onError: (err) => toast.error(err.message),
   });
 
+  const { mutate: parseAI, isPending: isParsing } = useMutation({
+    mutationFn: () => aiService.parseServices(bulkText),
+    onSuccess: (res) => {
+      setParsedServices(res.data);
+      toast.success("AI parsed services successfully!");
+    },
+    onError: (err) => toast.error(err?.response?.data?.message || "AI failed to parse text"),
+  });
+
+  const { mutate: saveBulk, isPending: isSavingBulk } = useMutation({
+    mutationFn: () => serviceService.createBulkServices(parsedServices),
+    onSuccess: (res) => {
+      toast.success(res.message || "Bulk services added!");
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.SERVICES });
+      setBulkModal(false);
+      setBulkText("");
+      setParsedServices(null);
+    },
+    onError: (err) => toast.error(err?.response?.data?.message || "Failed to save bulk services"),
+  });
+
   const openCreate = () => { setForm(emptyForm); setModal("create"); };
   const openEdit = (svc) => { setForm({ ...svc, price: svc.price, duration: svc.duration }); setModal(svc); };
 
-  const handleImageUpload = async (e) => {
-    if (!e.target.files[0]) return;
+  const handleImageUpload = async (e, isBulk = false, bulkIndex = null) => {
+    const input = e.target;
+    const files = input ? Array.from(input.files || []) : Array.from(e);
+    if (!files.length) return;
+
+    const imageFiles = files.filter(file => file.type.startsWith("image/"));
+    if (!imageFiles.length) {
+      toast.error("Only image files can be uploaded");
+      return;
+    }
+
     setUploading(true);
     try {
-      const res = await uploadService.uploadImage(e.target.files[0]);
-      setForm(f => ({ ...f, image: res.data.url }));
+      const res = await uploadService.uploadImage(imageFiles[0]);
+      const url = res.data.url;
+      
+      if (isBulk) {
+        const updated = [...parsedServices];
+        updated[bulkIndex].image = url;
+        setParsedServices(updated);
+      } else {
+        setForm(f => ({ ...f, image: url }));
+      }
       toast.success("Image uploaded!");
     } catch { toast.error("Image upload failed"); }
-    finally { setUploading(false); }
+    finally { setUploading(false); if (input) input.value = ""; }
   };
 
   const handleSubmit = () => {
@@ -60,9 +102,14 @@ export default function Services() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div><h1 className="font-display text-2xl font-bold text-[var(--color-text-primary)]">Services</h1><p className="text-[var(--color-text-muted)] text-sm">{services.length} services</p></div>
-        <button onClick={openCreate} className="flex items-center gap-2 px-5 py-2.5 -white text-sm font-medium rounded-xl transition-all">
-          <Plus className="w-4 h-4" /> Add Service
-        </button>
+        <div className="flex items-center gap-3">
+          <button onClick={() => setBulkModal(true)} className="flex items-center gap-2 px-5 py-2.5 bg-[var(--color-surface-card)] border border-[var(--color-rose-300)] text-[var(--color-rose-600)] text-sm font-bold rounded-xl transition-all hover:bg-[var(--color-rose-50)]">
+            <Sparkles className="w-4 h-4" /> AI Bulk Entry
+          </button>
+          <button onClick={openCreate} className="flex items-center gap-2 px-5 py-2.5 -white text-sm font-medium rounded-xl transition-all">
+            <Plus className="w-4 h-4" /> Add Service
+          </button>
+        </div>
       </div>
       <div className="rounded-2xl overflow-hidden border border-[var(--color-border)]">
         <table className="w-full">
@@ -121,7 +168,7 @@ export default function Services() {
           </div>
           <div>
             <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Image</label>
-            <input type="file" accept="image/*" onChange={handleImageUpload} className="text-sm text-[var(--color-text-muted)]" />
+            <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e)} className="text-sm text-[var(--color-text-muted)]" />
             {form.image && <img src={form.image} alt="" className="mt-2 w-24 h-16 object-cover rounded-lg" />}
           </div>
           <div className="flex gap-3 pt-2">
@@ -130,6 +177,62 @@ export default function Services() {
               {creating || updating ? "Saving..." : "Save"}
             </button>
           </div>
+        </div>
+      </Modal>
+
+      <Modal open={bulkModal} onClose={() => { setBulkModal(false); setParsedServices(null); setBulkText(""); }} title="AI Bulk Service Entry">
+        <div className="space-y-4">
+          {!parsedServices ? (
+            <>
+              <p className="text-sm text-[var(--color-text-muted)]">
+                Paste your service list below (e.g. from notes or menu). Our AI will extract the details automatically.
+              </p>
+              <textarea
+                value={bulkText}
+                onChange={(e) => setBulkText(e.target.value)}
+                placeholder="E.g. Haircut 500 takes 30 mins, Basic Facial 1000 takes 60 mins..."
+                className="w-full h-40 px-4 py-3 rounded-xl bg-[var(--color-surface-3)] border border-[var(--color-border)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-rose-500)] transition-all text-sm resize-none"
+              />
+              <div className="flex gap-3">
+                <button onClick={() => setBulkModal(false)} className="flex-1 py-2.5 border border-[var(--color-border)] text-[var(--color-text-secondary)] rounded-xl">Cancel</button>
+                <button onClick={() => parseAI()} disabled={isParsing || !bulkText} className="flex-1 py-2.5 -white font-medium rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                  {isParsing ? "Extracting..." : <><Sparkles className="w-4 h-4" /> Parse Services</>}
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-emerald-600 font-semibold mb-2">
+                Successfully parsed {parsedServices.length} services! Review below:
+              </p>
+              <div className="max-h-80 overflow-y-auto space-y-3 bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-3">
+                {parsedServices.map((s, i) => (
+                  <div key={i} className="flex flex-col text-sm border-b border-[var(--color-border)] pb-3 last:border-0 last:pb-0">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <span className="font-bold text-[var(--color-text-primary)]">{s.name}</span>
+                        <div className="text-xs text-[var(--color-text-muted)]">Category: {s.category}</div>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <div className="font-semibold">₹{s.price}</div>
+                        <div className="text-xs text-[var(--color-text-muted)]">{s.duration} mins</div>
+                      </div>
+                    </div>
+                    <div className="mt-2 flex items-center gap-2">
+                       <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, true, i)} className="text-xs text-[var(--color-text-muted)]" />
+                       {s.image && <img src={s.image} alt="preview" className="w-8 h-8 rounded object-cover" />}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-3 mt-4">
+                <button onClick={() => setParsedServices(null)} className="flex-1 py-2.5 border border-[var(--color-border)] text-[var(--color-text-secondary)] rounded-xl">Edit Text</button>
+                <button onClick={() => saveBulk()} disabled={isSavingBulk} className="flex-1 py-2.5 -white font-medium rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                  {isSavingBulk ? "Saving..." : "Confirm & Save"}
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </Modal>
     </div>

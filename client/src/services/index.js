@@ -14,6 +14,7 @@ export const serviceService = {
   getAll: () => api.get("/services"),
   getOne: (id) => api.get(`/services/${id}`),
   create: (data) => api.post("/services", data),
+  createBulkServices: (data) => api.post("/services/bulk", { services: data }),
   update: (id, data) => api.put(`/services/${id}`, data),
   delete: (id) => api.delete(`/services/${id}`),
 };
@@ -117,6 +118,10 @@ export const aiService = {
   },
   parseProducts: async (rawText) => {
     const res = await api.post("/ai/parse-products", { rawText });
+    return res.data;
+  },
+  parseServices: async (rawText) => {
+    const res = await api.post("/ai/parse-services", { rawText });
     return res.data;
   },
 };

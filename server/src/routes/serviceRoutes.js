@@ -3,6 +3,7 @@ const router = express.Router();
 
 const {
     createService,
+    createBulkServices,
     updateService,
     deleteService,
     getAllServices,
@@ -20,6 +21,7 @@ router.use(protect);
 router.use(authorize("admin"));
 
 router.post("/", createService);
+router.post("/bulk", createBulkServices);
 router.put("/:id", updateService);
 router.delete("/:id", deleteService);
 

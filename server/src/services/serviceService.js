@@ -21,6 +21,49 @@ const createService = async (serviceData) => {
     return service;
 };
 
+const createBulkServices = async (servicesData) => {
+    if (!Array.isArray(servicesData) || servicesData.length === 0) {
+        throw new AppError("No services provided", 400);
+    }
+
+    const createdServices = [];
+    const errors = [];
+
+    for (const [index, serviceData] of servicesData.entries()) {
+        try {
+            const validationResult = createServiceSchema.safeParse(serviceData);
+            if (!validationResult.success) {
+                errors.push(`Row ${index + 1}: ${validationResult.error.issues.map(e => e.message).join(", ")}`);
+                continue;
+            }
+
+            const existingService = await Service.findOne({ name: validationResult.data.name });
+            if (existingService) {
+                // Update existing service
+                const updated = await Service.findByIdAndUpdate(
+                    existingService._id,
+                    validationResult.data,
+                    { new: true, runValidators: true }
+                );
+                createdServices.push(updated);
+            } else {
+                // Create new
+                const created = await Service.create(validationResult.data);
+                createdServices.push(created);
+            }
+        } catch (err) {
+            errors.push(`Row ${index + 1}: ${err.message}`);
+        }
+    }
+
+    return {
+        successCount: createdServices.length,
+        errorCount: errors.length,
+        errors,
+        services: createdServices
+    };
+};
+
 const updateService = async (id, serviceData) => {
     // Validate request data
     const validationResult = updateServiceSchema.safeParse(serviceData);
@@ -109,6 +152,7 @@ const getSingleService = async (id) => {
 
 module.exports = {
     createService,
+    createBulkServices,
     updateService,
     deleteService,
     getAllServices,

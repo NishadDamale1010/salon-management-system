@@ -129,3 +129,65 @@ CRITICAL: Return ONLY valid JSON starting with [ and ending with ]. Do not inclu
         return sendResponse(res, 500, false, "Failed to parse products. Ensure your text contains recognizable product details.", null);
     }
 });
+
+exports.parseBulkServices = asyncHandler(async (req, res, next) => {
+    const { rawText } = req.body;
+
+    if (!rawText) {
+        return sendResponse(res, 400, false, "Raw text is required", null);
+    }
+
+    try {
+        const systemPrompt = `You are a strict data extraction AI. You will receive a messy string of text containing salon services.
+Extract each service and return ONLY a valid JSON array of objects.
+EACH object MUST have these exact fields and matching types:
+- name (String): Name of the service
+- category (String): The service category (e.g. Hair, Skin, Nails, Spa, Makeup)
+- price (Number): Base price in INR
+- duration (Number): Duration in minutes
+- description (String): A brief description of the service (max 2 sentences)
+- benefits (Array of Strings): 2-3 key benefits
+
+CRITICAL: Return ONLY valid JSON starting with [ and ending with ]. Do not include markdown code blocks, do not include any explanatory text.`;
+
+        const groqMessages = [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: rawText }
+        ];
+
+        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
+            },
+            body: JSON.stringify({
+                model: process.env.GROQ_STREAM_MODEL || "llama-3.1-8b-instant",
+                messages: groqMessages,
+                temperature: 0.1,
+            })
+        });
+
+        if (!response.ok) {
+            const errBody = await response.text();
+            throw new Error(`Groq API error: ${response.statusText} - ${errBody}`);
+        }
+
+        const data = await response.json();
+        let reply = data.choices[0].message.content.trim();
+
+        // Remove markdown formatting if the AI ignores instructions
+        if (reply.startsWith("\`\`\`json")) {
+            reply = reply.replace(/^\`\`\`json/, "").replace(/\`\`\`$/, "").trim();
+        } else if (reply.startsWith("\`\`\`")) {
+            reply = reply.replace(/^\`\`\`/, "").replace(/\`\`\`$/, "").trim();
+        }
+
+        const parsedServices = JSON.parse(reply);
+
+        sendResponse(res, 200, true, "Parsed successfully", parsedServices);
+    } catch (err) {
+        console.error("AI Parse Services error:", err);
+        return sendResponse(res, 500, false, "Failed to parse services. Ensure your text contains recognizable service details.", null);
+    }
+});
