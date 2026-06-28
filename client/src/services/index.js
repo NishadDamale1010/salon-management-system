@@ -95,6 +95,7 @@ export const adminService = {
 export const inventoryService = {
   getProducts: (params) => api.get("/inventory", { params }),
   createProduct: (data) => api.post("/inventory", data),
+  createBulkProducts: (data) => api.post("/inventory/bulk", { products: data }),
   updateProduct: (id, data) => api.put(`/inventory/${id}`, data),
   logTransaction: (id, data) => api.post(`/inventory/${id}/transaction`, data),
   getHistory: (id) => api.get(`/inventory/${id}/history`),
@@ -107,6 +108,17 @@ export const activityService = {
 export const paymentService = {
   createCheckout: (appointmentId) =>
     api.post(`/payments/create-checkout-session/${appointmentId}`),
+};
+
+export const aiService = {
+  chat: async (messages) => {
+    const res = await api.post("/ai/chat", { messages });
+    return res.data;
+  },
+  parseProducts: async (rawText) => {
+    const res = await api.post("/ai/parse-products", { rawText });
+    return res.data;
+  },
 };
 
 export const uploadService = {

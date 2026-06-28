@@ -7,9 +7,34 @@ exports.getProducts = asyncHandler(async (req, res) => {
     sendResponse(res, 200, true, "Products retrieved successfully", data);
 });
 
+const Product = require("../models/Product");
+
 exports.createProduct = asyncHandler(async (req, res) => {
     const data = await inventoryService.createProduct(req.body);
     sendResponse(res, 201, true, "Product created successfully", data);
+});
+
+// @desc    Create bulk products
+// @route   POST /api/inventory/bulk
+// @access  Private/Admin
+exports.createBulkProducts = asyncHandler(async (req, res, next) => {
+    const { products } = req.body;
+    
+    if (!products || !Array.isArray(products) || products.length === 0) {
+        return sendResponse(res, 400, false, "Please provide an array of products.", null);
+    }
+
+    try {
+        const createdProducts = await Product.insertMany(products, { ordered: false });
+        sendResponse(res, 201, true, `${createdProducts.length} products created successfully.`, createdProducts);
+    } catch (err) {
+        // If some inserts fail due to unique constraints, ordered: false will still insert the rest
+        if (err.name === 'BulkWriteError') {
+            const insertedCount = err.result.nInserted;
+            return sendResponse(res, 207, true, `${insertedCount} products created. Some failed (likely duplicate SKUs).`, null);
+        }
+        next(err);
+    }
 });
 
 exports.updateProduct = asyncHandler(async (req, res) => {

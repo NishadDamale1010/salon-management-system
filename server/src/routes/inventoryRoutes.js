@@ -7,6 +7,7 @@ const {
     updateProduct,
     logTransaction,
     getProductHistory,
+    createBulkProducts,
 } = require("../controllers/inventoryController");
 
 // Public route to view product catalog
@@ -16,6 +17,7 @@ router.use(protect);
 
 router.use(authorize("admin"));
 router.post("/", createProduct);
+router.post("/bulk", createBulkProducts);
 router.put("/:id", updateProduct);
 
 router.post("/:id/transaction", logTransaction);

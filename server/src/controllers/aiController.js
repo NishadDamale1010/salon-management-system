@@ -66,3 +66,66 @@ CRITICAL RULES:
         next(err);
     }
 });
+
+exports.parseBulkProducts = asyncHandler(async (req, res, next) => {
+    const { rawText } = req.body;
+
+    if (!rawText) {
+        return sendResponse(res, 400, false, "Raw text is required", null);
+    }
+
+    try {
+        const systemPrompt = `You are a strict data extraction AI. You will receive a messy string of text containing inventory products.
+Extract each product and return ONLY a valid JSON array of objects.
+EACH object MUST have these exact fields and matching types:
+- name (String): Name of the product
+- sku (String): A generated SKU like "AI-GEN-001" (make it unique)
+- brand (String): The brand name if available, else "Generic"
+- category (String): The product category (e.g. Hair Care, Skin Care)
+- price (Number): Selling price in INR
+- stockQuantity (Number): The quantity mentioned
+- unit (String): E.g. "bottles", "tubes", "pieces", "jars". Default to "pieces" if unknown.
+
+CRITICAL: Return ONLY valid JSON starting with [ and ending with ]. Do not include markdown code blocks, do not include any explanatory text.`;
+
+        const groqMessages = [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: rawText }
+        ];
+
+        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
+            },
+            body: JSON.stringify({
+                model: process.env.GROQ_STREAM_MODEL || "llama-3.1-8b-instant",
+                messages: groqMessages,
+                temperature: 0.1,
+            })
+        });
+
+        if (!response.ok) {
+            const errBody = await response.text();
+            throw new Error(`Groq API error: ${response.statusText} - ${errBody}`);
+        }
+
+        const data = await response.json();
+        let reply = data.choices[0].message.content.trim();
+
+        // Remove markdown formatting if the AI ignores instructions
+        if (reply.startsWith("\`\`\`json")) {
+            reply = reply.replace(/^\`\`\`json/, "").replace(/\`\`\`$/, "").trim();
+        } else if (reply.startsWith("\`\`\`")) {
+            reply = reply.replace(/^\`\`\`/, "").replace(/\`\`\`$/, "").trim();
+        }
+
+        const parsedProducts = JSON.parse(reply);
+
+        sendResponse(res, 200, true, "Parsed successfully", parsedProducts);
+    } catch (err) {
+        console.error("AI Parse Products error:", err);
+        return sendResponse(res, 500, false, "Failed to parse products. Ensure your text contains recognizable product details.", null);
+    }
+});
