@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Sparkles, Calendar, ArrowRight, Bell, Gift, Trophy, Crown, ChevronLeft, ChevronRight, Clock, ShoppingBag, Package } from "lucide-react";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useAuthStore } from "../../store/authStore";
+import { useNotifications } from "../../hooks/useNotifications";
 import { appointmentService, notificationService, rewardService, authService, serviceService, inventoryService } from "../../services";
 import { QUERY_KEYS } from "../../constants/queryKeys";
 import { formatDate, formatCurrency, getMembershipColor, cn } from "../../utils";
@@ -23,6 +24,7 @@ export default function CustomerDashboard() {
   const { data: leaderboardData } = useQuery({ queryKey: ["LEADERBOARD"], queryFn: authService.getLeaderboard });
   const { data: servicesData } = useQuery({ queryKey: QUERY_KEYS.SERVICES, queryFn: serviceService.getAll });
   const { data: productsData } = useQuery({ queryKey: QUERY_KEYS.PRODUCTS, queryFn: inventoryService.getProducts });
+  const { permissionStatus, requestPermission } = useNotifications();
 
   const appointments = apptData?.data || [];
   const notifications = notifData?.data || [];
@@ -114,6 +116,30 @@ export default function CustomerDashboard() {
           </Link>
         </div>
       </motion.div>
+
+      {permissionStatus === "default" && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl bg-blue-50 border border-blue-200 p-5 flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+              <Bell className="w-5 h-5 text-blue-500" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-blue-900">Never Miss an Update!</h3>
+              <p className="text-sm text-blue-700 mt-0.5">Enable push notifications for appointment reminders and offers.</p>
+            </div>
+          </div>
+          <button onClick={requestPermission} className="px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-xl transition-all shadow-sm">
+            Enable Notifications
+          </button>
+        </motion.div>
+      )}
+
+      {permissionStatus === "denied" && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl bg-red-50 border border-red-200 p-4 flex items-center gap-3">
+          <Bell className="w-5 h-5 text-red-500 flex-shrink-0" />
+          <p className="text-sm text-red-700">Push notifications are blocked by your browser. Please enable them in your site settings to receive updates.</p>
+        </motion.div>
+      )}
 
       <DailyTipModal />
 
