@@ -12,6 +12,16 @@ const warnDev = (...args) => {
     if (isDev) console.warn(...args);
 };
 
+const defaultFirebaseConfig = {
+    apiKey: "AIzaSyB9fOj3Aqfjj3KijM6CVYV7PPqNw8No0dw",
+    authDomain: "salon-management-554d6.firebaseapp.com",
+    projectId: "salon-management-554d6",
+    storageBucket: "salon-management-554d6.firebasestorage.app",
+    messagingSenderId: "710416836437",
+    appId: "1:710416836437:web:25e28f9a73c7d9153571dc",
+    measurementId: "G-EDZQPHDB0X",
+};
+
 const firebaseConfig = {
     apiKey: cleanEnv(import.meta.env.VITE_FIREBASE_API_KEY),
     authDomain: cleanEnv(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN),
@@ -21,6 +31,11 @@ const firebaseConfig = {
     appId: cleanEnv(import.meta.env.VITE_FIREBASE_APP_ID),
     measurementId: cleanEnv(import.meta.env.VITE_FIREBASE_MEASUREMENT_ID),
 };
+
+const defaultVapidPublicKey = [
+    "BNuwRmFSkrZRiJFb-VNHuGcilac5owKvJxg5jclUo4wZmQZMEAaR1NzKJYgYnbqrig",
+    "TksbhYLLc_KHjdAHWYZLE",
+].join("");
 
 let app;
 let messagingPromise;
