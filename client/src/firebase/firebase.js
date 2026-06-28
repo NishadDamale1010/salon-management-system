@@ -12,6 +12,11 @@ const firebaseConfig = {
     appId: cleanEnv(import.meta.env.VITE_FIREBASE_APP_ID),
 };
 
+const isDev = import.meta.env.DEV;
+const warnDev = (...args) => {
+    if (isDev) console.warn(...args);
+};
+
 let app;
 let messaging;
 
@@ -29,8 +34,10 @@ try {
 
 export const requestFirebaseNotificationPermission = async () => {
     try {
-        const messaging = await getMessagingInstance();
-        if (!messaging) return null;
+        if (!messaging) {
+            warnDev("Firebase messaging is not initialized.");
+            return null;
+        }
 
         const permission = Notification.permission === "granted"
             ? "granted"
@@ -57,10 +64,24 @@ export const requestFirebaseNotificationPermission = async () => {
             warnDev("No Firebase registration token was returned.");
             return null;
         }
+
+        return currentToken;
     } catch (err) {
         console.error("An error occurred while retrieving token:", err);
         return null;
     }
+};
+
+/**
+ * Subscribe to foreground messages. Returns a cleanup function.
+ * Usage: const unsubscribe = await subscribeToForegroundMessages(callback);
+ */
+export const subscribeToForegroundMessages = async (callback) => {
+    if (!messaging) return () => {};
+    const unsubscribe = onMessage(messaging, (payload) => {
+        callback(payload);
+    });
+    return unsubscribe;
 };
 
 export const onMessageListener = () =>

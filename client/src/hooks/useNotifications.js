@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { requestFirebaseNotificationPermission, onMessageListener } from "../firebase/firebase";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { requestFirebaseNotificationPermission, subscribeToForegroundMessages } from "../firebase/firebase";
 import api from "../services/api";
 import { useAuthStore } from "../store/authStore";
 import { toast } from "sonner"; // Assuming sonner is used for toasts (from package.json)
@@ -40,6 +40,14 @@ const getPayloadText = (payload) => {
     };
 };
 
+const getNotificationPermissionStatus = () => {
+    try {
+        return typeof Notification !== "undefined" ? Notification.permission : "default";
+    } catch {
+        return "default";
+    }
+};
+
 export const useNotifications = () => {
     const queryClient = useQueryClient();
     const { user } = useAuthStore();
@@ -47,12 +55,11 @@ export const useNotifications = () => {
     const [unreadCount, setUnreadCount] = useState(0);
     const [fcmToken, setFcmToken] = useState(null);
     const [permissionStatus, setPermissionStatus] = useState(getNotificationPermissionStatus());
-
-    const fetchNotifications = useCallback(async () => {
-        if (!user) return;
+    const listenerId = useRef(`listener-${Date.now()}`);
 
     // Fetch initial notifications
-    const fetchNotifications = async () => {
+    const fetchNotifications = useCallback(async () => {
+        if (!user) return;
         try {
             const response = await api.get("/notifications");
             const items = response.data || [];
@@ -63,6 +70,7 @@ export const useNotifications = () => {
         }
     }, [user]);
 
+    // Register Token with backend
     const registerToken = useCallback(async (token) => {
         if (!user || !token) return;
 
@@ -72,22 +80,21 @@ export const useNotifications = () => {
         const storageKey = `fcm-token:${userId}`;
         if (localStorage.getItem(storageKey) === token) return;
 
-    // Register Token with backend
-    const registerToken = async (token) => {
         try {
             await api.post("/notifications/register-token", { 
                 token, 
                 device: navigator.userAgent, 
                 platform: "web" 
             });
+            localStorage.setItem(storageKey, token);
             console.log("FCM Token registered with backend");
         } catch (error) {
             console.error("Error registering token with backend:", error);
         }
-    };
+    }, [user]);
 
     // Initialize FCM
-    const initFCM = async (isManual = false) => {
+    const initFCM = useCallback(async (isManual = false) => {
         if (!user) return;
         
         // On mobile, requestPermission on load is often blocked.
@@ -104,7 +111,7 @@ export const useNotifications = () => {
         } else if (Notification.permission === "denied") {
             setPermissionStatus("denied");
         }
-    };
+    }, [user, registerToken]);
 
     useEffect(() => {
         if (!user) return;
