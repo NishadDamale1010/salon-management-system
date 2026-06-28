@@ -9,7 +9,7 @@ export default function UpdateToast({ needRefresh, updateServiceWorker, close })
           initial={{ opacity: 0, y: 50, scale: 0.9 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 50, scale: 0.9 }}
-          className="fixed bottom-24 left-4 right-4 md:left-auto md:right-4 md:w-96 z-[100]"
+          className="fixed top-4 left-4 right-4 md:top-auto md:bottom-6 md:left-auto md:right-4 md:w-96 z-[100]"
         >
           <div className="glass border border-[var(--color-rose-500)]/40 p-5 rounded-3xl shadow-2xl relative overflow-hidden backdrop-blur-xl bg-gradient-to-br from-[var(--color-surface)] via-[var(--color-surface-card)] to-purple-950/20">
             {/* Background Glow */}
@@ -39,7 +39,7 @@ export default function UpdateToast({ needRefresh, updateServiceWorker, close })
 
             <div className="flex gap-3 mt-5">
               <button
-                onClick={() => updateServiceWorker(true)}
+                onClick={() => updateServiceWorker()}
                 className="flex-1 py-2.5 bg-gradient-to-r from-[var(--color-rose-500)] to-purple-600 text-white font-bold rounded-xl text-sm transition-all hover:shadow-[0_0_15px_rgba(244,63,94,0.4)] flex items-center justify-center gap-1.5 hover:scale-[1.02]"
               >
                 <RefreshCw className="w-4 h-4 animate-spin-slow" />

@@ -2,11 +2,11 @@ import { useState, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { Toaster } from "sonner";
-import { useRegisterSW } from "virtual:pwa-register/react";
 import AppRouter from "../routes";
 import UpdateToast from "../components/pwa/UpdateToast";
 import InstallBanner from "../components/pwa/InstallBanner";
 import OfflinePage from "../components/pwa/OfflinePage";
+import { usePwaUpdate } from "../hooks/usePwaUpdate";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -33,24 +33,7 @@ export default function App() {
     };
   }, []);
 
-  const {
-    needRefresh: [needRefresh, setNeedRefresh],
-    updateServiceWorker,
-  } = useRegisterSW({
-    onRegistered(r) {
-      console.log("SW Registered:", r);
-      // Periodically check for updates (every 1 hour)
-      if (r) {
-        setInterval(() => {
-          console.log("Checking for SW updates...");
-          r.update();
-        }, 60 * 60 * 1000);
-      }
-    },
-    onRegisterError(error) {
-      console.error("SW Registration error:", error);
-    },
-  });
+  const { needRefresh, applyUpdate, dismissUpdate } = usePwaUpdate();
 
   if (!isOnline) {
     return <OfflinePage />;
@@ -74,10 +57,10 @@ export default function App() {
       
       {/* PWA Elements */}
       <InstallBanner />
-      <UpdateToast 
-        needRefresh={needRefresh} 
-        updateServiceWorker={updateServiceWorker} 
-        close={() => setNeedRefresh(false)} 
+      <UpdateToast
+        needRefresh={needRefresh}
+        updateServiceWorker={applyUpdate}
+        close={dismissUpdate}
       />
 
       {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}

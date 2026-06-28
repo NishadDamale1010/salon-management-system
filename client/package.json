@@ -4,8 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "node scripts/generate-firebase-sw.js && vite build",
+    "dev": "node scripts/generate-version.js && node scripts/generate-firebase-sw.js && vite",
+    "build": "node scripts/generate-firebase-sw.js && node scripts/generate-version.js && vite build",
     "lint": "oxlint",
     "preview": "vite preview"
   },

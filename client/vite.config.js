@@ -17,8 +17,9 @@ export default defineConfig({
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
         cleanupOutdatedCaches: true,
-        clientsClaim: true,
-        skipWaiting: true,
+        // Wait for user confirmation before activating a new service worker
+        clientsClaim: false,
+        skipWaiting: false,
         importScripts: ["firebase-messaging-sw.js"],
         runtimeCaching: [
           {
