@@ -162,23 +162,21 @@ const updateAppointmentStatus = async (appointmentId, updateData) => {
 
     await appointment.save();
 
-    // Send notifications based on the final saved status. This also covers automatic
-    // status changes, such as manual UPI verification changing Pending -> Confirmed.
-    const currentStatus = appointment.status;
-    if (currentStatus !== previousStatus) {
-        if (currentStatus === "Confirmed") {
+    // Send notifications based on status change
+    if (status && status !== previousStatus) {
+        if (status === "Confirmed") {
             const title = "Appointment Confirmed! ✨";
             const message = `Hello Queen, your pampering session is confirmed! Your appointment for ${appointment.services.map(s => s.serviceName).join(", ")} on ${new Date(appointment.appointmentDate).toDateString()} at ${appointment.appointmentTime} is confirmed. Enjoy your self-care time, gorgeous! ✨ Here is your Appointment Card!`;
-
-            // Persist the in-app notification before returning so the customer can see it immediately.
-            await notificationService.sendToUser(appointment.customer._id, "Appointment", title, message, { route: `/appointments/${appointment._id}` });
-
+            
+            // Appointment Card Notification
+            notificationService.sendToUser(appointment.customer._id, "Appointment", title, message, { route: `/appointments/${appointment._id}` }).catch(console.error);
+            
             // Send Email
             if (appointment.customer.email) {
                 const html = `<h2>${title}</h2><p>Hi ${appointment.customer.firstName},</p><p>${message}</p><p>Thank you for choosing Gayatri Beauty Studio!</p>`;
                 emailService.sendEmail(appointment.customer.email, title, html).catch(console.error);
             }
-        } else if (currentStatus === "Cancelled" || currentStatus === "Rejected" || currentStatus === "Payment Failed") {
+        } else if (status === "Cancelled" || status === "Rejected" || status === "Payment Failed") {
             const title = "Appointment Rejected 😞";
             let reasonText = "";
             if (appointment.paymentStatus === "Rejected") {
@@ -186,29 +184,23 @@ const updateAppointmentStatus = async (appointmentId, updateData) => {
             }
             const rescheduleText = suggestedTimeFrame ? ` We suggest rescheduling to: ${suggestedTimeFrame}.` : " Please reschedule at your earliest convenience.";
             const message = `Sorry, your appointment on ${new Date(appointment.appointmentDate).toDateString()} at ${appointment.appointmentTime} was declined.${reasonText}${rescheduleText}`;
-
-            // Persist the in-app notification before returning so the customer can see it immediately.
-            await notificationService.sendToUser(appointment.customer._id, "Appointment", title, message, { route: `/appointments/${appointment._id}` });
-
+            
+            // Sorry Card Notification
+            notificationService.createNotification(appointment.customer._id, "Appointment", title, message, { route: `/appointments/${appointment._id}` }).catch(console.error);
+            
             // Send Email
             if (appointment.customer.email) {
                 const html = `<h2>${title}</h2><p>Hi ${appointment.customer.firstName},</p><p>${message}</p>`;
                 emailService.sendEmail(appointment.customer.email, title, html).catch(console.error);
             }
         }
-    } else if (currentStatus === "Confirmed" && paymentStatus === "Paid" && previousPaymentStatus === "Verification Pending") {
+    } else if (appointment.status === "Confirmed" && paymentStatus === "Paid" && previousPaymentStatus === "Verification Pending") {
         // Just send payment verified notification if status was already confirmed somehow
-        await notificationService.sendToUser(
-            appointment.customer._id,
-            "Payment Verified",
-            "Payment Verified ✅",
-            "Your manual UPI payment has been successfully verified. Your appointment is confirmed.",
-            { route: `/appointments/${appointment._id}` }
-        );
+        notificationService.createNotification(appointment.customer._id, "Payment Verified", "Payment Verified ✅", "Your manual UPI payment has been successfully verified. Your appointment is confirmed.").catch(console.error);
     }
 
     // Loyalty Engine logic: Automatically award points when status changes to Completed for the first time
-    if (appointment.status === "Completed" && !wasAlreadyCompleted) {
+    if (status === "Completed" && !wasAlreadyCompleted) {
         const points = Math.floor(appointment.totalAmount / 100);
 
         if (points > 0) {
