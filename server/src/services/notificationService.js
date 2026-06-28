@@ -35,6 +35,18 @@ const sendNotification = async (token, title, body, data = {}) => {
                 body,
                 ...(data.image && { image: data.image })
             },
+            android: {
+                notification: {
+                    sound: 'default'
+                }
+            },
+            apns: {
+                payload: {
+                    aps: {
+                        sound: 'default'
+                    }
+                }
+            },
             data: {
                 click_action: "FLUTTER_NOTIFICATION_CLICK", // for cross-platform support
                 route: data.route || "/",
@@ -76,6 +88,18 @@ const sendToUser = async (userId, type, title, body, options = {}) => {
                 title,
                 body,
                 ...(options.image && { image: options.image })
+            },
+            android: {
+                notification: {
+                    sound: 'default'
+                }
+            },
+            apns: {
+                payload: {
+                    aps: {
+                        sound: 'default'
+                    }
+                }
             },
             data: {
                 route: options.route || "/",
@@ -134,6 +158,18 @@ const sendToMany = async (userIds, type, title, body, options = {}) => {
                 title,
                 body,
                 ...(options.image && { image: options.image })
+            },
+            android: {
+                notification: {
+                    sound: 'default'
+                }
+            },
+            apns: {
+                payload: {
+                    aps: {
+                        sound: 'default'
+                    }
+                }
             },
             data: {
                 route: options.route || "/",
