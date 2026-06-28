@@ -8,7 +8,7 @@ import { QUERY_KEYS } from "../../constants/queryKeys";
 import { formatCurrency, glowPointsFromAmount } from "../../utils";
 import { toast } from "sonner";
 
-const STEPS = ["Select Services", "Choose Date", "Choose Time", "Add Notes", "Payment", "Confirm"];
+const STEPS = ["Select Services", "Schedule & Notes", "Payment", "Confirm"];
 const TIME_SLOTS = ["09:00 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "12:00 PM", "01:00 PM", "02:00 PM", "02:30 PM", "03:00 PM", "04:00 PM", "05:00 PM", "05:30 PM", "06:00 PM"];
 
 export default function BookAppointment() {
@@ -71,9 +71,7 @@ export default function BookAppointment() {
 
   const canNext = [
     selectedServices.length > 0,
-    !!date,
-    !!time,
-    true,
+    !!date && !!time,
     paymentMethod === "Cash" || (paymentMethod === "Manual UPI" && transactionId.trim().length > 3),
     true,
   ];
@@ -188,52 +186,48 @@ export default function BookAppointment() {
           </motion.div>
         )}
 
-        {/* Step 1: Date */}
+        {/* Step 1: Schedule & Notes (Combined) */}
         {step === 1 && (
-          <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-            <h2 className="font-semibold text-[var(--color-text-primary)] mb-4">Choose Date</h2>
-            <input
-              type="date"
-              value={date}
-              min={new Date().toISOString().split("T")[0]}
-              onChange={e => setDate(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-[var(--color-surface-3)] border border-[var(--color-border)] text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-rose-500)] focus:ring-1 focus:ring-[var(--color-rose-500)]/30 transition-all"
-            />
-          </motion.div>
-        )}
+          <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
+            <div>
+              <h2 className="font-semibold text-[var(--color-text-primary)] mb-4">Choose Date</h2>
+              <input
+                type="date"
+                value={date}
+                min={new Date().toISOString().split("T")[0]}
+                onChange={e => setDate(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-[var(--color-surface-3)] border border-[var(--color-border)] text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-rose-500)] focus:ring-1 focus:ring-[var(--color-rose-500)]/30 transition-all"
+              />
+            </div>
 
-        {/* Step 2: Time */}
-        {step === 2 && (
-          <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-            <h2 className="font-semibold text-[var(--color-text-primary)] mb-4">Choose Time</h2>
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-              {TIME_SLOTS.map(slot => (
-                <button key={slot} onClick={() => setTime(slot)}
-                  className={`py-2.5 rounded-xl text-sm font-medium transition-all border ${time === slot ? "-white" : "border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-rose-500)]/40"}`}
-                >
-                  {slot}
-                </button>
-              ))}
+            <div>
+              <h2 className="font-semibold text-[var(--color-text-primary)] mb-4">Choose Time</h2>
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                {TIME_SLOTS.map(slot => (
+                  <button key={slot} onClick={() => setTime(slot)}
+                    className={`py-2.5 rounded-xl text-sm font-medium transition-all border ${time === slot ? "-white" : "border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-rose-500)]/40"}`}
+                  >
+                    {slot}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h2 className="font-semibold text-[var(--color-text-primary)] mb-4">Special Instructions <span className="text-[var(--color-text-muted)] font-normal text-sm">(Optional)</span></h2>
+              <textarea
+                value={notes}
+                onChange={e => setNotes(e.target.value)}
+                rows={3}
+                placeholder="Any specific requirements or notes for your appointment..."
+                className="w-full px-4 py-3 rounded-xl bg-[var(--color-surface-3)] border border-[var(--color-border)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-rose-500)] focus:ring-1 focus:ring-[var(--color-rose-500)]/30 transition-all resize-none"
+              />
             </div>
           </motion.div>
         )}
 
-        {/* Step 3: Notes */}
-        {step === 3 && (
-          <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-            <h2 className="font-semibold text-[var(--color-text-primary)] mb-4">Special Instructions <span className="text-[var(--color-text-muted)] font-normal text-sm">(Optional)</span></h2>
-            <textarea
-              value={notes}
-              onChange={e => setNotes(e.target.value)}
-              rows={5}
-              placeholder="Any specific requirements or notes for your appointment..."
-              className="w-full px-4 py-3 rounded-xl bg-[var(--color-surface-3)] border border-[var(--color-border)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-rose-500)] focus:ring-1 focus:ring-[var(--color-rose-500)]/30 transition-all resize-none"
-            />
-          </motion.div>
-        )}
-
-        {/* Step 4: Payment */}
-        {step === 4 && (
+        {/* Step 2: Payment */}
+        {step === 2 && (
           <motion.div key="step4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
             <h2 className="font-semibold text-[var(--color-text-primary)] mb-4">Choose Payment Method</h2>
             <div className="grid grid-cols-2 gap-3 mb-6">
@@ -299,8 +293,8 @@ export default function BookAppointment() {
           </motion.div>
         )}
 
-        {/* Step 5: Confirm */}
-        {step === 5 && (
+        {/* Step 3: Confirm */}
+        {step === 3 && (
           <motion.div key="step4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
             <h2 className="font-semibold text-[var(--color-text-primary)] mb-4">Review & Confirm</h2>
             <div className="rounded-2xl bg-[var(--color-surface-card)] border border-[var(--color-border)] p-5 space-y-4">

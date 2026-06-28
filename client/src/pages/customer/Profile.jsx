@@ -5,7 +5,7 @@ import { formatDate, getMembershipColor, getInitials } from "../../utils";
 import { Badge } from "../../components/ui/Badge";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { authService } from "../../services";
+import { authService, uploadService } from "../../services";
 import { toast } from "sonner";
 
 export default function Profile() {
@@ -18,7 +18,9 @@ export default function Profile() {
     lastName: user?.lastName || "",
     phone: user?.phone || "",
     instagram: user?.instagram || "",
+    avatar: user?.avatar || "",
   });
+  const [isUploading, setIsUploading] = useState(false);
 
   const { mutate: updateProfile, isPending } = useMutation({
     mutationFn: authService.updateMe,
@@ -40,14 +42,40 @@ export default function Profile() {
     updateProfile(formData);
   };
 
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploading(true);
+    try {
+      const res = await uploadService.uploadImage(file);
+      setFormData((prev) => ({ ...prev, avatar: res.data.url }));
+      toast.success("Profile picture updated! Please save changes.");
+      setIsEditing(true); // Auto-open edit mode so they can save
+    } catch (err) {
+      toast.error("Failed to upload image");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <h1 className="font-display text-2xl font-bold text-[var(--color-text-primary)]">My Profile</h1>
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
         className="rounded-2xl bg-gradient-to-br from-[var(--color-surface-card)] to-[var(--color-surface-2)] border border-[var(--color-border)] p-8 text-center shadow-[var(--shadow-card)]"
       >
-        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[var(--color-rose-600)] to-[var(--color-rose-400)] flex items-center justify-center text-[var(--color-text-primary)] text-3xl font-bold mx-auto mb-4">
-          {getInitials(user.firstName, user.lastName)}
+        <div className="relative w-24 h-24 mx-auto mb-4 group cursor-pointer">
+          <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" id="avatar-upload" disabled={isUploading} />
+          <label htmlFor="avatar-upload" className="w-full h-full rounded-full flex items-center justify-center overflow-hidden cursor-pointer bg-gradient-to-br from-[var(--color-rose-600)] to-[var(--color-rose-400)] text-[var(--color-text-primary)] text-3xl font-bold border-2 border-transparent hover:border-[var(--color-rose-300)] transition-all">
+            {formData.avatar || user.avatar ? (
+              <img src={formData.avatar || user.avatar} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              getInitials(user.firstName, user.lastName)
+            )}
+            <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
+              {isUploading ? <span className="w-6 h-6 border-2 border-white/50 border-t-white rounded-full animate-spin" /> : <Camera className="w-6 h-6 text-white" />}
+            </div>
+          </label>
         </div>
         <h2 className="font-display text-2xl font-bold text-[var(--color-text-primary)]">{user.firstName} {user.lastName}</h2>
         <p className="text-[var(--color-text-muted)] text-sm mt-1">{user.email}</p>
@@ -92,6 +120,7 @@ export default function Profile() {
                     lastName: user.lastName,
                     phone: user.phone || "",
                     instagram: user.instagram || "",
+                    avatar: user.avatar || "",
                   });
                 }}
                 className="p-2 hover:bg-[var(--color-surface-2)] rounded-lg text-[var(--color-text-muted)] hover:text-red-400 transition-colors"

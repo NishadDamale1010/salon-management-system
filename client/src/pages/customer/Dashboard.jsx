@@ -65,20 +65,8 @@ export default function CustomerDashboard() {
     }
   }, [maxIndex]);
 
-  // Auto-scroll every 3 seconds
-  useEffect(() => {
-    if (activeServices.length <= 1) return;
-    const timer = setInterval(() => {
-      setSliderIndex(prev => {
-        const next = prev >= maxIndex ? 0 : prev + 1;
-        if (sliderRef.current?.children[next]) {
-          sliderRef.current.children[next].scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
-        }
-        return next;
-      });
-    }, 3000);
-    return () => clearInterval(timer);
-  }, [activeServices.length, maxIndex]);
+  // Removed auto-scroll as per request, keeping only manual scroll support
+
 
   // Touch/drag swipe support
   const touchStart = useRef(null);
