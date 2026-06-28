@@ -34,6 +34,12 @@ export default function Inventory() {
   const { mutate: create } = useMutation({ mutationFn: (data) => inventoryService.createProduct(normalizeProductForm(data)), onSuccess: () => { toast.success("Product created!"); qc.invalidateQueries({ queryKey: QUERY_KEYS.INVENTORY }); setCreateModal(false); }, onError: err => toast.error(err.message) });
   const { mutate: logTx } = useMutation({ mutationFn: ({ id, data }) => inventoryService.logTransaction(id, data), onSuccess: () => { toast.success("Stock updated!"); qc.invalidateQueries({ queryKey: QUERY_KEYS.INVENTORY }); setTxModal(null); }, onError: err => toast.error(err.message) });
 
+  const updateParsedProduct = (index, field, value) => {
+    const updated = [...parsedProducts];
+    updated[index][field] = value;
+    setParsedProducts(updated);
+  };
+
   const { mutate: parseAI, isPending: isParsing } = useMutation({
     mutationFn: () => aiService.parseProducts(bulkText),
     onSuccess: (res) => {
@@ -189,17 +195,26 @@ export default function Inventory() {
               <p className="text-sm text-emerald-600 font-semibold mb-2">
                 Successfully parsed {parsedProducts.length} products! Review below:
               </p>
-              <div className="max-h-60 overflow-y-auto space-y-3 bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-3">
+              <div className="max-h-80 overflow-y-auto space-y-3 bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-3">
                 {parsedProducts.map((p, i) => (
-                  <div key={i} className="flex justify-between items-start text-sm border-b border-[var(--color-border)] pb-2 last:border-0 last:pb-0">
-                    <div>
-                      <span className="font-bold text-[var(--color-text-primary)]">{p.name}</span>
-                      <div className="text-xs text-[var(--color-text-muted)]">Brand: {p.brand} | Cat: {p.category} | SKU: {p.sku}</div>
+                  <div key={i} className="flex flex-col text-sm border-b border-[var(--color-border)] pb-3 last:border-0 last:pb-0">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <span className="font-bold text-[var(--color-text-primary)]">{p.name}</span>
+                        <div className="text-xs text-[var(--color-text-muted)]">Brand: {p.brand} | Cat: {p.category} | SKU: {p.sku}</div>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <div className="font-semibold">₹{p.price}</div>
+                        <div className="text-xs text-[var(--color-text-muted)]">{p.stockQuantity} {p.unit}</div>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <div className="font-semibold">₹{p.price}</div>
-                      <div className="text-xs text-[var(--color-text-muted)]">{p.stockQuantity} {p.unit}</div>
-                    </div>
+                    <input
+                      type="text"
+                      placeholder="Image URL (optional)"
+                      value={p.imageUrl || ""}
+                      onChange={(e) => updateParsedProduct(i, 'imageUrl', e.target.value)}
+                      className="w-full px-3 py-1.5 rounded-lg bg-[var(--color-surface-3)] border border-[var(--color-border)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-rose-500)] text-xs transition-all"
+                    />
                   </div>
                 ))}
               </div>
