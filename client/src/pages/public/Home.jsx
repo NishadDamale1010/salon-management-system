@@ -851,6 +851,19 @@ function MusicPlayer() {
     audioRef.current.loop = true;
     audioRef.current.volume = 0.3;
 
+    // Attempt to autoplay
+    const playPromise = audioRef.current.play();
+    if (playPromise !== undefined) {
+      playPromise.then(() => {
+        setIsPlaying(true);
+      }).catch(error => {
+        // Autoplay was prevented by the browser. 
+        // User needs to click the button to start.
+        console.log("Autoplay prevented:", error);
+        setIsPlaying(false);
+      });
+    }
+
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
