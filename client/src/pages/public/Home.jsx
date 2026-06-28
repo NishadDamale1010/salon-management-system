@@ -3,13 +3,15 @@ import { motion, useScroll, useTransform, AnimatePresence, useInView } from "fra
 import { Link } from "react-router-dom";
 import {
   Sparkles, ArrowRight, MessageCircle, Star, CheckCircle,
-  ChevronDown, Clock, Award, Users, Shield, Plus, Minus, Camera, Package, ShoppingBag, Music
+  ChevronDown, Clock, Award, Users, Shield, Plus, Minus, Camera, Package, ShoppingBag, Music,
+  Calendar, Gift, MapPin
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { cmsService, serviceService, inventoryService } from "../../services";
 import { QUERY_KEYS } from "../../constants/queryKeys";
 import { SALON_NAME, SALON_TAGLINE, SALON_WHATSAPP, SALON_INSTAGRAM } from "../../constants";
 import { formatCurrency } from "../../utils";
+import { useAuthStore } from "../../store/authStore";
 import AIConsultant from "../../components/ai/AIConsultant";
 import SocialProofPopup from "../../components/ui/SocialProofPopup";
 import GrandOpeningFX from "../../components/ui/GrandOpeningFX";
@@ -45,7 +47,7 @@ function CountUp({ end, suffix = "", duration = 2000 }) {
 }
 
 // ==================== HERO ====================
-function HeroSection({ settings }) {
+function HeroSection({ settings, bookLink, isAuthenticated }) {
   const hero = settings?.hero || {};
   const [currentBg, setCurrentBg] = useState(0);
   const { scrollY } = useScroll();
@@ -94,7 +96,7 @@ function HeroSection({ settings }) {
 
       {/* Floating Sparkles & Orbs (Reduced blur & opacity for clarity) */}
       <motion.div style={{ y: y2 }} className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-[var(--color-rose-300)]/15 rounded-full blur-[100px] animate-float pointer-events-none z-0" />
-      <motion.div style={{ y: y2 }} className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-pink-300/15 rounded-full blur-[90px] animate-float pointer-events-none z-0" style={{ animationDelay: "2s" }} />
+      <motion.div style={{ y: y2 }} className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-pink-300/15 rounded-full blur-[90px] animate-float pointer-events-none z-0 [animation-delay:2s]" />
 
       {/* Content */}
       <motion.div 
@@ -153,25 +155,41 @@ function HeroSection({ settings }) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 1.2, ease: "easeOut" }}
-          className="flex flex-col sm:flex-row gap-6 justify-center w-full sm:w-auto"
+          className="flex flex-col sm:flex-row gap-4 justify-center w-full sm:w-auto"
         >
           <Link
-            to="/register"
-            className="group relative inline-flex items-center justify-center gap-3 px-10 py-5 bg-gradient-to-r from-[var(--color-rose-500)] to-[var(--color-rose-400)] text-white font-bold rounded-2xl text-lg transition-all hover:shadow-[0_0_40px_rgba(255,105,180,0.4)] hover:-translate-y-1 overflow-hidden"
+            to={bookLink}
+            className="group relative inline-flex items-center justify-center gap-3 px-10 py-5 btn-primary rounded-2xl text-lg transition-all hover:shadow-[0_0_40px_rgba(255,105,180,0.4)] hover:-translate-y-1 overflow-hidden"
           >
             <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
-            <span className="relative z-10">{hero.primaryButtonText || "Book Your Session"}</span>
+            <span className="relative z-10">{hero.primaryButtonText || (isAuthenticated ? "Book Appointment" : "Book Your Session")}</span>
             <ArrowRight className="w-5 h-5 relative z-10 group-hover:translate-x-1 transition-transform" />
           </Link>
-          <a
-            href={SALON_INSTAGRAM}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-3 px-10 py-5 bg-white border border-[var(--color-rose-200)] text-[var(--color-rose-600)] font-bold rounded-2xl text-lg transition-all hover:bg-[var(--color-rose-50)] hover:border-[var(--color-rose-300)] hover:-translate-y-1 hover:shadow-xl backdrop-blur-xl"
+          <Link
+            to="/gallery"
+            className="inline-flex items-center justify-center gap-3 px-10 py-5 btn-outline rounded-2xl text-lg transition-all hover:-translate-y-1 hover:shadow-lg backdrop-blur-xl"
           >
             <Camera className="w-5 h-5 text-[var(--color-rose-500)]" />
-            Explore Gallery
-          </a>
+            View Gallery
+          </Link>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.9 }}
+          className="mt-10 flex flex-wrap items-center justify-center gap-6 text-sm text-[var(--color-text-secondary)]"
+        >
+          {[
+            { icon: Star, text: "4.9 Client Rating" },
+            { icon: Users, text: "Expert Stylists" },
+            { icon: MapPin, text: "Premium Salon Experience" },
+          ].map(({ icon: Icon, text }) => (
+            <span key={text} className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/70 border border-[var(--color-rose-100)] shadow-sm">
+              <Icon className="w-4 h-4 text-[var(--color-rose-500)]" />
+              {text}
+            </span>
+          ))}
         </motion.div>
       </motion.div>
       
@@ -233,8 +251,54 @@ function StatsSection() {
   );
 }
 
+// ==================== HOW IT WORKS ====================
+function HowItWorksSection({ bookLink }) {
+  const steps = [
+    { icon: Calendar, title: "Book Online", desc: "Choose services, pick a time, and request your slot in under 2 minutes." },
+    { icon: Sparkles, title: "Visit & Relax", desc: "Walk in for a premium pampering session with certified beauty experts." },
+    { icon: Gift, title: "Glow & Earn", desc: "Collect Glow Points on every visit and redeem exclusive salon rewards." },
+  ];
+
+  return (
+    <section className="py-20 px-4 bg-[var(--color-surface)] border-b border-[var(--color-border)]">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center mb-12">
+          <p className="text-[var(--color-rose-500)] text-sm font-bold tracking-[0.2em] uppercase mb-3">Simple Process</p>
+          <h2 className="font-display text-3xl md:text-4xl font-bold text-[var(--color-text-primary)]">
+            How It <span className="text-gradient-rose">Works</span>
+          </h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {steps.map((step, i) => (
+            <motion.div
+              key={step.title}
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1 }}
+              viewport={{ once: true }}
+              className="relative text-center p-8 rounded-3xl bg-[var(--color-surface-card)] border border-[var(--color-border)] hover:border-[var(--color-rose-300)] hover:shadow-lg transition-all"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-[var(--color-rose-500)]/10 flex items-center justify-center mx-auto mb-4">
+                <step.icon className="w-7 h-7 text-[var(--color-rose-500)]" />
+              </div>
+              <span className="text-xs font-bold text-[var(--color-rose-400)] uppercase tracking-widest">Step {i + 1}</span>
+              <h3 className="font-display text-xl font-bold text-[var(--color-text-primary)] mt-2 mb-2">{step.title}</h3>
+              <p className="text-sm text-[var(--color-text-muted)] leading-relaxed">{step.desc}</p>
+            </motion.div>
+          ))}
+        </div>
+        <div className="text-center mt-10">
+          <Link to={bookLink} className="inline-flex items-center gap-2 px-8 py-3.5 btn-primary rounded-xl text-sm font-bold transition-all hover:shadow-[var(--shadow-glow-rose)]">
+            Start Booking <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ==================== SERVICES ====================
-function ServicesSection({ services = [] }) {
+function ServicesSection({ services = [], bookLink, isAuthenticated }) {
   return (
     <section className="py-24 px-4 max-w-7xl mx-auto relative">
       <div className="text-center mb-16">
@@ -291,8 +355,8 @@ function ServicesSection({ services = [] }) {
               </div>
               
               <Link
-                to="/register"
-                className="mt-4 w-full py-2.5 bg-[var(--color-surface-2)] text-[var(--color-text-primary)] font-bold rounded-xl transition-all text-center block group-hover:bg-gradient-to-r group-hover:from-[var(--color-rose-500)] group-hover:to-purple-600 group-hover:text-white group-hover:shadow-md"
+                to={isAuthenticated && svc?._id ? `/book?service=${svc._id}` : bookLink}
+                className="mt-4 w-full py-2.5 bg-[var(--color-surface-2)] text-[var(--color-text-primary)] font-bold rounded-xl transition-all text-center block group-hover:bg-gradient-to-r group-hover:from-[var(--color-rose-500)] group-hover:to-[var(--color-rose-600)] group-hover:text-white group-hover:shadow-md"
               >
                 Book Now
               </Link>
@@ -780,7 +844,7 @@ function TrophiesSection() {
 }
 
 // ==================== CALL TO ACTION ====================
-function CTASection() {
+function CTASection({ bookLink }) {
   return (
     <section className="relative py-32 overflow-hidden bg-[var(--color-rose-50)]">
       <div className="absolute inset-0 z-0">
@@ -830,8 +894,8 @@ function CTASection() {
           transition={{ delay: 0.4 }}
         >
           <Link
-            to="/register"
-            className="group relative inline-flex items-center justify-center gap-3 px-12 py-6 bg-[var(--color-rose-500)] text-white font-black rounded-full text-xl transition-all hover:shadow-[0_0_40px_rgba(255,105,180,0.4)] hover:scale-105 overflow-hidden"
+            to={bookLink}
+            className="group relative inline-flex items-center justify-center gap-3 px-12 py-6 btn-primary font-black rounded-full text-xl transition-all hover:shadow-[0_0_40px_rgba(255,105,180,0.4)] hover:scale-105 overflow-hidden"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-[var(--color-rose-400)] to-[var(--color-rose-600)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <span className="relative z-10 group-hover:text-white transition-colors duration-500">Book Appointment</span>
@@ -877,7 +941,7 @@ function MusicPlayer() {
       animate={{ opacity: 1, scale: 1 }}
       transition={{ delay: 1, type: "spring" }}
       onClick={togglePlay}
-      className={`fixed bottom-6 left-6 z-50 w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all ${
+      className={`fixed bottom-24 md:bottom-6 left-4 md:left-6 z-50 w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center shadow-lg transition-all ${
         isPlaying ? "bg-[var(--color-rose-500)] text-white shadow-[0_0_20px_rgba(244,63,94,0.4)] animate-pulse" : "bg-white/80 text-[var(--color-rose-500)] backdrop-blur-md border border-[var(--color-rose-200)] hover:bg-[var(--color-rose-50)]"
       }`}
       aria-label="Toggle Background Music"
@@ -889,6 +953,14 @@ function MusicPlayer() {
 
 // ==================== MAIN HOME ====================
 export default function Home() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const user = useAuthStore((s) => s.user);
+  const bookLink = isAuthenticated
+    ? user?.role === "admin"
+      ? "/admin/appointments"
+      : "/book"
+    : "/register";
+
   const { data: settingsRes } = useQuery({
     queryKey: QUERY_KEYS.SETTINGS,
     queryFn: cmsService.getSettings,
@@ -925,14 +997,15 @@ export default function Home() {
   const offers = offersRes?.data || [];
   const testimonials = testimonialRes?.data || [];
   const faqs = faqRes?.data || [];
-  const products = productsRes?.data?.products || [];
+  const products = productsRes?.data || [];
 
   return (
     <div className="overflow-x-hidden relative">
       <GrandOpeningFX />
-      <HeroSection settings={settings} />
+      <HeroSection settings={settings} bookLink={bookLink} isAuthenticated={isAuthenticated} />
       <StatsSection />
-      <ServicesSection services={services} />
+      <HowItWorksSection bookLink={bookLink} />
+      <ServicesSection services={services} bookLink={bookLink} isAuthenticated={isAuthenticated} />
       <FeaturedProductsSection products={products} />
       <WhyUsSection />
       <GallerySection gallery={gallery} />
@@ -940,7 +1013,7 @@ export default function Home() {
       <TestimonialsSection testimonials={testimonials} />
       <FAQSection faqs={faqs} />
       <TrophiesSection />
-      <CTASection />
+      <CTASection bookLink={bookLink} />
       
       <MusicPlayer />
       <SocialProofPopup />
@@ -954,7 +1027,7 @@ export default function Home() {
         href={`https://wa.me/${SALON_WHATSAPP}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-6 right-24 z-[60] w-16 h-16 bg-gradient-to-tr from-green-600 to-green-400 rounded-full flex items-center justify-center shadow-[0_10px_30px_rgba(34,197,94,0.4)] transition-all"
+        className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-[60] w-14 h-14 bg-gradient-to-tr from-green-600 to-green-400 rounded-full flex items-center justify-center shadow-[0_10px_30px_rgba(34,197,94,0.4)] transition-all hover:scale-110"
         aria-label="WhatsApp"
       >
         <MessageCircle className="w-8 h-8 text-white" />

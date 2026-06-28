@@ -8,6 +8,7 @@ import { useAuthStore } from "../../store/authStore";
 import { useLogout } from "../../hooks/useAuth";
 import { SALON_NAME } from "../../constants";
 import Footer from "./Footer";
+import MobileBookBar from "../pwa/MobileBookBar";
 
 const publicLinks = [
   { to: "/", label: "Home" },
@@ -41,7 +42,7 @@ export default function PublicLayout() {
       <header
         className={cn(
           "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
-          scrolled ? "glass border-b border-white/5 shadow-lg" : "bg-transparent"
+          scrolled ? "glass-dark shadow-sm" : "bg-white/80 backdrop-blur-lg md:bg-white/60 border-b border-transparent md:border-[var(--color-border)]/40"
         )}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
@@ -98,7 +99,7 @@ export default function PublicLayout() {
                 </Link>
                 <Link
                   to="/register"
-                  className="px-5 py-2 -white text-sm font-medium rounded-xl transition-all hover:shadow-[var(--shadow-glow-rose)]"
+                  className="px-5 py-2 btn-primary text-sm font-medium rounded-xl transition-all hover:shadow-[var(--shadow-glow-rose)]"
                 >
                   Book Now
                 </Link>
@@ -137,14 +138,14 @@ export default function PublicLayout() {
                 <div className="pt-2 border-t border-white/5 flex gap-2">
                   {isAuthenticated ? (
                     <Link to={user?.role === "admin" ? "/admin" : "/dashboard"}
-                      className="flex-1 text-center py-2.5 -white text-sm font-medium rounded-xl"
+                      className="flex-1 text-center py-2.5 btn-primary text-sm font-medium rounded-xl"
                     >
                       Dashboard
                     </Link>
                   ) : (
                     <>
                       <Link to="/login" className="flex-1 text-center py-2.5 border border-[var(--color-border)] text-[var(--color-text-secondary)] text-sm font-medium rounded-xl">Login</Link>
-                      <Link to="/register" className="flex-1 text-center py-2.5 -white text-sm font-medium rounded-xl">Book Now</Link>
+                      <Link to="/register" className="flex-1 text-center py-2.5 btn-primary text-sm font-medium rounded-xl">Book Now</Link>
                     </>
                   )}
                 </div>
@@ -155,11 +156,12 @@ export default function PublicLayout() {
       </header>
 
       {/* Page Content */}
-      <main className="flex-1 pt-16">
+      <main className="flex-1 pt-16 pb-20 md:pb-0">
         <Outlet />
       </main>
 
       <Footer />
+      <MobileBookBar />
     </div>
   );
 }

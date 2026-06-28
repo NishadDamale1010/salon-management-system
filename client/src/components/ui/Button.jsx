@@ -14,8 +14,9 @@ export function Button({
     "inline-flex items-center justify-center gap-2 font-medium rounded-xl transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-rose-500)] disabled:opacity-50 disabled:cursor-not-allowed";
 
   const variants = {
-    primary:
-      "-white shadow-lg hover:-translate-y-0.5",
+    primary: "btn-primary shadow-lg hover:-translate-y-0.5",
+    outline: "btn-outline hover:-translate-y-0.5",
+    ghost: "text-[var(--color-text-secondary)] hover:text-[var(--color-rose-500)] hover:bg-[var(--color-rose-500)]/5",
   };
 
   const sizes = {

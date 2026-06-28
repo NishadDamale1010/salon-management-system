@@ -149,6 +149,56 @@ body {
   border: 1px solid rgba(255, 182, 193, 0.4);
 }
 
+.glass-dark {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(251, 207, 232, 0.6);
+  box-shadow: 0 4px 24px rgba(255, 105, 180, 0.08);
+}
+
+/* Primary action button — used across the app (legacy alias: .-white) */
+.btn-primary,
+.-white {
+  background: linear-gradient(135deg, var(--color-rose-500) 0%, var(--color-rose-600) 100%);
+  color: #ffffff;
+  font-weight: 600;
+  border: none;
+}
+
+.btn-primary:hover:not(:disabled),
+.-white:hover:not(:disabled) {
+  box-shadow: var(--shadow-glow-rose);
+  filter: brightness(1.05);
+}
+
+.btn-primary:disabled,
+.-white:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-outline {
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--color-rose-600);
+  border: 1px solid var(--color-rose-200);
+  font-weight: 600;
+}
+
+.btn-outline:hover:not(:disabled) {
+  background: var(--color-rose-50);
+  border-color: var(--color-rose-300);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 .shimmer {
   background: linear-gradient(
     90deg,
