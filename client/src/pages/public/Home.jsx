@@ -3,10 +3,16 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   Sparkles, Calendar, Star, Trophy, ShieldCheck,
   Gift, ShoppingBag, Tag, Users, Activity, Crown,
-  ArrowRight, Video, Instagram, MessageCircle
+  ArrowRight, Video, MessageCircle
 } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import { SALON_WHATSAPP, SALON_INSTAGRAM } from "../../constants";
+import { cmsService, serviceService, inventoryService } from "../../services";
+import { QUERY_KEYS } from "../../constants/queryKeys";
+
+import ServicesSection from "../../components/home/ServicesSection";
+import FeaturedProductsSection from "../../components/home/FeaturedProductsSection";
+import AIConsultant from "../../components/ai/AIConsultant";
 
 const QuickLink = ({ icon: Icon, label, subtext, to }) => (
   <Link to={to} className="flex flex-col items-center p-4 bg-[var(--color-surface)] hover:bg-[var(--color-surface-2)] rounded-3xl transition-all min-w-[100px] text-center border border-[var(--color-border)] hover:border-[var(--color-rose-300)] hover:shadow-sm">
@@ -18,46 +24,17 @@ const QuickLink = ({ icon: Icon, label, subtext, to }) => (
   </Link>
 );
 
-const FeatureCard = ({ image, title, subtext, icon: Icon }) => (
-  <div className="bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-2xl overflow-hidden hover:shadow-md transition-all">
-    <div className="h-32 bg-gray-100 relative overflow-hidden group">
-      <img src={image} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-    </div>
-    <div className="p-4 flex items-start gap-3">
-      <div className="text-[var(--color-rose-500)] mt-0.5">
-        <Icon className="w-5 h-5" />
-      </div>
-      <div>
-        <h4 className="font-semibold text-[var(--color-text-primary)] text-sm">{title}</h4>
-        <p className="text-[11px] text-[var(--color-text-muted)] mt-0.5">{subtext}</p>
-      </div>
-    </div>
-  </div>
-);
-
-const ServiceCard = ({ image, title, price, to }) => (
-  <Link to={to} className="group bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-2xl overflow-hidden hover:shadow-md transition-all flex flex-col min-w-[160px]">
-    <div className="h-32 bg-gray-100 overflow-hidden">
-      <img src={image} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-    </div>
-    <div className="p-4 flex flex-col justify-between flex-grow">
-      <div>
-        <h4 className="font-semibold text-[var(--color-text-primary)] text-sm">{title}</h4>
-        <p className="text-xs text-[var(--color-text-muted)] mt-1">Starting at <span className="font-semibold text-[var(--color-rose-500)]">₹{price}</span></p>
-      </div>
-      <div className="w-8 h-8 rounded-full bg-[var(--color-rose-500)] text-white flex items-center justify-center mt-3 self-end group-hover:bg-[var(--color-rose-600)] transition-colors">
-        <ArrowRight className="w-4 h-4" />
-      </div>
-    </div>
-  </Link>
-);
-
 export default function Home() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const user = useAuthStore((s) => s.user);
   const navigate = useNavigate();
 
   const bookLink = isAuthenticated ? (user?.role === "admin" ? "/admin" : "/customer") : "/register";
+
+  const { data: servicesData } = useQuery({ queryKey: QUERY_KEYS.SERVICES, queryFn: serviceService.getAll });
+  const { data: inventoryData } = useQuery({ queryKey: QUERY_KEYS.INVENTORY, queryFn: inventoryService.getAll });
+  const services = servicesData?.data || [];
+  const products = inventoryData?.data || [];
 
   return (
     <div className="min-h-screen bg-[var(--color-surface)] pb-24 relative overflow-x-hidden">
@@ -91,7 +68,9 @@ export default function Home() {
             {/* Social Links Row */}
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 pt-8 border-t border-[var(--color-border)] mt-8">
               <a href={SALON_INSTAGRAM} target="_blank" rel="noreferrer" className="flex items-center gap-3 px-5 py-2.5 bg-rose-50 hover:bg-rose-100 rounded-2xl transition-colors border border-rose-100">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-yellow-400 via-rose-500 to-purple-500 text-white flex items-center justify-center"><Instagram className="w-4 h-4"/></div>
+                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-yellow-400 via-rose-500 to-purple-500 text-white flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                </div>
                 <div className="font-semibold text-rose-900 text-sm">Follow us on Instagram</div>
               </a>
               <a href={`https://wa.me/${SALON_WHATSAPP}`} target="_blank" rel="noreferrer" className="flex items-center gap-3 px-5 py-2.5 bg-emerald-50 hover:bg-emerald-100 rounded-2xl transition-colors border border-emerald-100">
@@ -150,100 +129,34 @@ export default function Home() {
           <QuickLink icon={Users} label="Refer & Earn" subtext="Invite Friends" to={isAuthenticated ? "/customer/rewards" : "/register"} />
         </section>
 
-        {/* WELCOME GIFT BANNER */}
-        <section className="bg-gradient-to-r from-rose-50 to-pink-50 border border-rose-100 rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden shadow-sm">
+        {/* GLOWFEED BANNER */}
+        <section className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-100 rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden shadow-sm">
           <div className="absolute -right-10 -top-10 w-40 h-40 bg-pink-200/50 rounded-full blur-3xl" />
           <div className="flex items-center gap-6 relative z-10">
             <div className="w-16 h-16 md:w-20 md:h-20 flex-shrink-0 relative">
-              <Gift className="w-full h-full text-[var(--color-rose-500)]" />
+              <div className="w-full h-full bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center shadow-inner rotate-3">
+                <Video className="w-10 h-10" />
+              </div>
               <Sparkles className="w-6 h-6 text-yellow-400 absolute -top-1 -right-1" />
             </div>
             <div>
-              <h3 className="text-xl md:text-2xl font-display font-bold text-[var(--color-text-primary)] mb-1">Welcome Gift Just For You!</h3>
+              <h3 className="text-xl md:text-2xl font-display font-bold text-[var(--color-text-primary)] mb-1">Join the GlowFeed!</h3>
               <p className="text-[var(--color-text-muted)] text-sm md:text-base">
-                Get <span className="font-bold text-[var(--color-rose-600)]">200 Glow Points</span> on your first booking<br className="hidden md:block" /> and unlock exclusive rewards.
+                Discover the latest beauty trends, share your looks, and connect with our community.
               </p>
             </div>
           </div>
-          <Link to={bookLink} className="w-full md:w-auto px-6 py-3 bg-[var(--color-rose-500)] hover:bg-[var(--color-rose-600)] text-white font-semibold rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 whitespace-nowrap z-10">
-            Claim Now <Sparkles className="w-4 h-4" />
+          <Link to="/feed" className="w-full md:w-auto px-6 py-3 bg-purple-500 hover:bg-purple-600 text-white font-semibold rounded-2xl shadow-lg shadow-purple-500/30 transition-all flex items-center justify-center gap-2 whitespace-nowrap z-10">
+            Explore Feed <Sparkles className="w-4 h-4" />
           </Link>
         </section>
 
-        {/* WHY CHOOSE US & GLOW CHALLENGE */}
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-4">
-            <div className="flex items-center gap-2 text-[var(--color-text-primary)] font-display font-bold text-xl">
-              Why Choose Gayatri Beauty Studio? <Sparkles className="w-4 h-4 text-rose-500" />
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <FeatureCard 
-                icon={Users} title="Expert Stylists" subtext="Certified & Experienced"
-                image="https://images.unsplash.com/photo-1521590832167-7bfc17484d20?q=80&w=300&auto=format&fit=crop"
-              />
-              <FeatureCard 
-                icon={ShoppingBag} title="Premium Products" subtext="Top Quality Brands"
-                image="https://images.unsplash.com/photo-1629198688000-71f23e745b6e?q=80&w=300&auto=format&fit=crop"
-              />
-              <FeatureCard 
-                icon={Sparkles} title="Personalized Care" subtext="Just For You"
-                image="https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?q=80&w=300&auto=format&fit=crop"
-              />
-              <FeatureCard 
-                icon={ShieldCheck} title="Hygienic & Safe" subtext="Your Safety First"
-                image="https://images.unsplash.com/photo-1581594693702-fbdc51b2763b?q=80&w=300&auto=format&fit=crop"
-              />
-            </div>
-          </div>
-
-          <div className="relative rounded-3xl overflow-hidden bg-gray-900 text-white flex flex-col justify-end p-6 h-[320px] lg:h-auto mt-4 lg:mt-0">
-            <img src="https://images.unsplash.com/photo-1600269408643-d34e6284f181?q=80&w=500&auto=format&fit=crop" alt="Challenge" className="absolute inset-0 w-full h-full object-cover opacity-50" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#2a0845]/90 to-transparent" />
-            
-            <div className="relative z-10">
-              <h3 className="font-display text-2xl font-bold mb-1">Glow Challenge</h3>
-              <div className="inline-block px-2 py-1 bg-white/20 backdrop-blur text-xs font-medium rounded mb-3 border border-white/20">
-                May Edition
-              </div>
-              <p className="text-sm text-gray-200 mb-4 max-w-[200px]">Post your best look and win exciting prizes!</p>
-              
-              <Link to="/feed" className="inline-block px-5 py-2 bg-[var(--color-rose-500)] hover:bg-[var(--color-rose-600)] text-white font-medium rounded-xl text-sm mb-4 transition-colors shadow-lg">
-                Join Now
-              </Link>
-              
-              {/* Countdown (Static visually) */}
-              <div className="flex items-center gap-2 text-center">
-                <div className="bg-white/10 backdrop-blur rounded p-1.5 w-10 border border-white/10"><div className="font-bold text-lg leading-tight">05</div><div className="text-[8px] uppercase tracking-wider opacity-70">Days</div></div>
-                <div className="text-rose-300 font-bold">:</div>
-                <div className="bg-white/10 backdrop-blur rounded p-1.5 w-10 border border-white/10"><div className="font-bold text-lg leading-tight">12</div><div className="text-[8px] uppercase tracking-wider opacity-70">Hours</div></div>
-                <div className="text-rose-300 font-bold">:</div>
-                <div className="bg-white/10 backdrop-blur rounded p-1.5 w-10 border border-white/10"><div className="font-bold text-lg leading-tight">35</div><div className="text-[8px] uppercase tracking-wider opacity-70">Min</div></div>
-                <div className="text-rose-300 font-bold">:</div>
-                <div className="bg-white/10 backdrop-blur rounded p-1.5 w-10 border border-white/10"><div className="font-bold text-lg leading-tight">42</div><div className="text-[8px] uppercase tracking-wider opacity-70">Sec</div></div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* POPULAR SERVICES */}
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-display font-bold text-xl text-[var(--color-text-primary)] flex items-center gap-2">Popular Services <Sparkles className="w-4 h-4 text-rose-500" /></h2>
-            <Link to="/services" className="text-sm font-medium text-[var(--color-rose-500)] flex items-center gap-1 hover:underline">
-              View All Services <ArrowRight className="w-3 h-3" />
-            </Link>
-          </div>
-          <div className="flex gap-4 overflow-x-auto pb-4 snap-x scrollbar-hide">
-            <ServiceCard title="Hair Styling" price="499" image="https://images.unsplash.com/photo-1562322140-8baeececf3df?q=80&w=300&auto=format&fit=crop" to="/services" />
-            <ServiceCard title="Facial" price="999" image="https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?q=80&w=300&auto=format&fit=crop" to="/services" />
-            <ServiceCard title="Nail Art" price="699" image="https://images.unsplash.com/photo-1522337660859-02fbefca4702?q=80&w=300&auto=format&fit=crop" to="/services" />
-            <ServiceCard title="Makeup" price="1499" image="https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?q=80&w=300&auto=format&fit=crop" to="/services" />
-            <ServiceCard title="Spa & Wellness" price="799" image="https://images.unsplash.com/photo-1544161515-4ab6ce6db874?q=80&w=300&auto=format&fit=crop" to="/services" />
-          </div>
-        </section>
+        {/* SERVICES AND PRODUCTS */}
+        <ServicesSection services={services} bookLink={bookLink} isAuthenticated={isAuthenticated} />
+        <FeaturedProductsSection products={products} />
 
         {/* BOTTOM PROMO BANNERS */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-[#FFF4E6] border border-[#FFE8CC] rounded-2xl p-5 relative overflow-hidden flex flex-col justify-center">
             <div className="relative z-10 w-2/3">
               <h3 className="text-[#D97706] font-display font-bold text-lg mb-1">Loyalty Rewards</h3>
@@ -261,18 +174,12 @@ export default function Home() {
             </div>
             <img src="https://cdn3d.iconscout.com/3d/premium/thumb/makeup-kit-5402773-4521404.png" alt="Makeup" className="absolute -right-2 bottom-0 w-28 h-28 object-contain drop-shadow-xl" />
           </div>
-
-          <div className="bg-rose-50 border border-rose-100 rounded-2xl p-5 relative overflow-hidden flex flex-col justify-center">
-            <div className="relative z-10 w-2/3">
-              <h3 className="text-rose-600 font-display font-bold text-lg mb-1">Refer & Earn</h3>
-              <p className="text-sm text-rose-800 mb-3 leading-snug">Invite your friends and earn 100 Glow Points!</p>
-              <Link to={isAuthenticated ? "/customer/rewards" : "/register"} className="inline-block px-4 py-1.5 bg-white text-rose-600 text-xs font-semibold rounded-lg shadow-sm hover:shadow-md transition-shadow">Refer Now</Link>
-            </div>
-            <img src="https://cdn3d.iconscout.com/3d/premium/thumb/women-taking-selfie-4437035-3684801.png" alt="Refer" className="absolute -right-6 bottom-0 w-36 h-36 object-contain drop-shadow-xl" />
-          </div>
         </section>
         
       </main>
+
+      {/* FLOATING AI CHAT */}
+      <AIConsultant />
     </div>
   );
 }
