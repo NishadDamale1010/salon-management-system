@@ -4,7 +4,7 @@ import { X, Sparkles } from "lucide-react";
 import { cn } from "../../utils";
 
 const TIPS = [
-  "Use GLOW20 for 20% off your next facial! ✨",
+  "You are a Queen! Remember to wear your invisible crown today. 👑",
   "Beauty Tip: Hydration is key! Drink 8 glasses of water today. 💧",
   "Don't forget to moisturize your neck—it shows aging first! 🧴",
   "Beauty Tip: Always take off your makeup before bed to let your skin breathe. 🌙",

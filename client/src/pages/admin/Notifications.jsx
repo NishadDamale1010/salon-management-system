@@ -81,7 +81,7 @@ export default function AdminNotifications() {
                       required
                       value={broadcast.body}
                       onChange={(e) => setBroadcast({ ...broadcast, body: e.target.value })}
-                      placeholder="Get 20% off on Hair Spa today..."
+                      placeholder="Hey gorgeous! We have a new facial treatment available..."
                       rows={3}
                       className="w-full bg-[var(--color-surface-background)] border border-[var(--color-border)] rounded-xl px-4 py-2 text-sm text-[var(--color-text-primary)] resize-none"
                   ></textarea>
