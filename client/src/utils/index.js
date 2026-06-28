@@ -60,3 +60,9 @@ export const truncate = (str, n = 80) =>
 export const glowPointsFromAmount = (amount) =>
   Math.floor((amount || 0) / 100);
 
+/** Prefer imageUrl (Cloudinary) over legacy image field */
+export const getProductImage = (product) => {
+  if (!product) return null;
+  return product.imageUrl || product.image || product.gallery?.[0] || null;
+};
+

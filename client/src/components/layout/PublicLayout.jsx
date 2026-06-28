@@ -2,11 +2,11 @@ import { Link, useLocation } from "react-router-dom";
 import { Outlet } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Menu, X, ChevronDown } from "lucide-react";
+import { Sparkles, Menu, X, Instagram } from "lucide-react";
 import { cn } from "../../utils";
 import { useAuthStore } from "../../store/authStore";
 import { useLogout } from "../../hooks/useAuth";
-import { SALON_NAME } from "../../constants";
+import { SALON_NAME, SALON_INSTAGRAM } from "../../constants";
 import Footer from "./Footer";
 import MobileBookBar from "../pwa/MobileBookBar";
 
@@ -74,6 +74,15 @@ export default function PublicLayout() {
 
           {/* Auth Buttons */}
           <div className="hidden md:flex items-center gap-3">
+            <a
+              href={SALON_INSTAGRAM}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Instagram"
+              className="w-10 h-10 rounded-xl border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)] hover:text-white hover:bg-gradient-to-br hover:from-purple-500 hover:to-pink-500 hover:border-transparent transition-all"
+            >
+              <Instagram className="w-4 h-4" />
+            </a>
             {isAuthenticated ? (
               <div className="flex items-center gap-2">
                 <Link
@@ -136,6 +145,16 @@ export default function PublicLayout() {
                   </Link>
                 ))}
                 <div className="pt-2 border-t border-white/5 flex gap-2">
+                  <a
+                    href={SALON_INSTAGRAM}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-[var(--color-border)] text-[var(--color-text-secondary)] text-sm font-medium hover:bg-gradient-to-r hover:from-purple-500 hover:to-pink-500 hover:text-white transition-all"
+                  >
+                    <Instagram className="w-4 h-4" /> Instagram
+                  </a>
+                </div>
+                <div className="pt-2 flex gap-2">
                   {isAuthenticated ? (
                     <Link to={user?.role === "admin" ? "/admin" : "/dashboard"}
                       className="flex-1 text-center py-2.5 btn-primary text-sm font-medium rounded-xl"

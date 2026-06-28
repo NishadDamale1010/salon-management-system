@@ -4,14 +4,15 @@ import { Link } from "react-router-dom";
 import {
   Sparkles, ArrowRight, MessageCircle, Star, CheckCircle,
   ChevronDown, Clock, Award, Users, Shield, Plus, Minus, Camera, Package, ShoppingBag, Music,
-  Calendar, Gift, MapPin
+  Calendar, Gift, MapPin, Instagram
 } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { cmsService, serviceService, inventoryService } from "../../services";
 import { QUERY_KEYS } from "../../constants/queryKeys";
 import { SALON_NAME, SALON_TAGLINE, SALON_WHATSAPP, SALON_INSTAGRAM } from "../../constants";
 import { formatCurrency } from "../../utils";
 import { useAuthStore } from "../../store/authStore";
+import ProductImage from "../../components/products/ProductImage";
 import AIConsultant from "../../components/ai/AIConsultant";
 import SocialProofPopup from "../../components/ui/SocialProofPopup";
 import GrandOpeningFX from "../../components/ui/GrandOpeningFX";
@@ -167,11 +168,20 @@ function HeroSection({ settings, bookLink, isAuthenticated }) {
           </Link>
           <Link
             to="/gallery"
-            className="inline-flex items-center justify-center gap-3 px-10 py-5 btn-outline rounded-2xl text-lg transition-all hover:-translate-y-1 hover:shadow-lg backdrop-blur-xl"
+            className="inline-flex items-center justify-center gap-3 px-8 py-5 btn-outline rounded-2xl text-lg transition-all hover:-translate-y-1 hover:shadow-lg backdrop-blur-xl"
           >
             <Camera className="w-5 h-5 text-[var(--color-rose-500)]" />
             View Gallery
           </Link>
+          <a
+            href={SALON_INSTAGRAM}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-3 px-8 py-5 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-2xl text-lg transition-all hover:-translate-y-1 hover:shadow-[0_0_30px_rgba(236,72,153,0.35)]"
+          >
+            <Instagram className="w-5 h-5" />
+            Instagram
+          </a>
         </motion.div>
 
         <motion.div
@@ -381,9 +391,18 @@ function ServicesSection({ services = [], bookLink, isAuthenticated }) {
 // ==================== FEATURED PRODUCTS ====================
 function FeaturedProductsSection({ products = [] }) {
   if (!products.length) return null;
-  
-  // Show top 4 products
-  const featured = products.slice(0, 4);
+
+  const featured = useMemo(() => {
+    return [...products]
+      .sort((a, b) => {
+        const score = (p) =>
+          (p.isFeatured ? 2 : 0) +
+          (p.imageUrl ? 1 : 0) +
+          (p.image ? 0.5 : 0);
+        return score(b) - score(a);
+      })
+      .slice(0, 4);
+  }, [products]);
 
   return (
     <section className="py-24 px-4 max-w-7xl mx-auto relative">
@@ -419,11 +438,11 @@ function FeaturedProductsSection({ products = [] }) {
             <div className="absolute inset-0 bg-gradient-to-tr from-[var(--color-rose-500)]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             
             <div className="relative w-full h-48 mb-5 bg-[var(--color-surface)] rounded-2xl overflow-hidden flex items-center justify-center p-2">
-              {p.image || p.imageUrl ? (
-                <img src={p.image || p.imageUrl} alt={p.name} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700 mix-blend-multiply dark:mix-blend-normal" />
-              ) : (
-                <Package className="w-12 h-12 text-[var(--color-rose-300)]" />
-              )}
+              <ProductImage
+                product={p}
+                className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700 mix-blend-multiply"
+                containerClassName="w-full h-full"
+              />
               {p.discount > 0 && (
                 <div className="absolute top-2 right-2 bg-[var(--color-rose-500)] text-white text-[10px] font-bold px-2 py-1 rounded-lg shadow-sm">
                   {p.discount}% OFF

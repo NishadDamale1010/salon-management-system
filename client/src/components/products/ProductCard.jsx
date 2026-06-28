@@ -3,6 +3,7 @@ import { Star, ShoppingBag, Eye, Plus } from "lucide-react";
 
 import { Badge } from "../ui/Badge";
 import { formatCurrency } from "../../utils";
+import ProductImage from "./ProductImage";
 
 export default function ProductCard({ product, onViewDetails, onAddToCart }) {
   return (
@@ -26,11 +27,8 @@ export default function ProductCard({ product, onViewDetails, onAddToCart }) {
           <Star className="w-4 h-4" />
         </button>
 
-        <motion.img
-          whileHover={{ scale: 1.05 }}
-          transition={{ duration: 0.4 }}
-          src={product.imageUrl || product.image}
-          alt={product.name}
+        <ProductImage
+          product={product}
           className="w-full h-full object-contain relative z-10 drop-shadow-xl mix-blend-multiply"
         />
 
