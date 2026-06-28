@@ -4,10 +4,19 @@ import { motion } from "framer-motion";
 
 export default function GrandOpeningFX() {
   useEffect(() => {
-    // Fireworks effect from the bottom corners
+    // Fireworks effect from the bottom corners (slower and smaller)
     const duration = 15 * 1000;
     const animationEnd = Date.now() + duration;
-    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+    
+    // Toned down confetti to make it less aggressive
+    const defaults = { 
+      startVelocity: 20, 
+      spread: 360, 
+      ticks: 200, // makes them last longer and fall slower
+      zIndex: 0,
+      scalar: 0.7, // smaller particles
+      gravity: 0.6 // fall slower
+    };
 
     function randomInRange(min, max) {
       return Math.random() * (max - min) + min;
@@ -20,36 +29,45 @@ export default function GrandOpeningFX() {
         return clearInterval(interval);
       }
 
-      const particleCount = 50 * (timeLeft / duration);
-      // since particles fall down, start a bit higher than random
-      confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
-      confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
-    }, 250);
+      const particleCount = 20 * (timeLeft / duration); // fewer particles
+      confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.1 } }));
+      confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.1 } }));
+    }, 800); // Trigger less frequently
 
     return () => clearInterval(interval);
   }, []);
 
-  const balloons = [
-    { id: 1, color: "bg-red-500", left: "10%", delay: 0 },
-    { id: 2, color: "bg-yellow-400", left: "30%", delay: 1 },
-    { id: 3, color: "bg-emerald-500", left: "50%", delay: 0.5 },
-    { id: 4, color: "bg-purple-500", left: "70%", delay: 2 },
-    { id: 5, color: "bg-[var(--color-rose-500)]", left: "85%", delay: 1.5 },
+  // Floating celebration emojis instead of fake CSS balloons
+  const floaters = [
+    { id: 1, text: "🎈", left: "15%", delay: 0, size: "text-6xl" },
+    { id: 2, text: "🎉", left: "35%", delay: 2, size: "text-5xl" },
+    { id: 3, text: "🥳", left: "50%", delay: 1, size: "text-7xl" },
+    { id: 4, text: "🎈", left: "70%", delay: 3, size: "text-5xl" },
+    { id: 5, text: "✨", left: "85%", delay: 1.5, size: "text-6xl" },
   ];
 
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-      {balloons.map((b) => (
+      {floaters.map((f) => (
         <motion.div
-          key={b.id}
-          initial={{ y: "110vh", opacity: 1 }}
-          animate={{ y: "-20vh", opacity: 0 }}
-          transition={{ duration: 10, delay: b.delay, ease: "linear", repeat: Infinity }}
-          className={`absolute w-12 h-16 rounded-[50%] ${b.color} shadow-lg opacity-80`}
-          style={{ left: b.left }}
+          key={f.id}
+          initial={{ y: "110vh", opacity: 0, rotate: -10 }}
+          animate={{ 
+            y: "-20vh", 
+            opacity: [0, 1, 1, 0],
+            rotate: 10,
+            x: [0, 20, -20, 0] // gentle sway
+          }}
+          transition={{ 
+            duration: 12, // slow float
+            delay: f.delay, 
+            ease: "easeInOut", 
+            repeat: Infinity 
+          }}
+          className={`absolute ${f.size} drop-shadow-lg opacity-80`}
+          style={{ left: f.left }}
         >
-          {/* Balloon string */}
-          <div className="absolute top-[100%] left-1/2 w-0.5 h-12 bg-white/50 -translate-x-1/2" />
+          {f.text}
         </motion.div>
       ))}
     </div>
