@@ -2,24 +2,18 @@ const { initializeApp, cert, getApps } = require("firebase-admin/app");
 const { getMessaging } = require("firebase-admin/messaging");
 const path = require("path");
 
-const isDev = process.env.NODE_ENV !== "production";
-const warnDev = (...args) => {
-    if (isDev) console.warn(...args);
-};
-const logDev = (...args) => {
-    if (isDev) console.info(...args);
-};
-
 try {
     let serviceAccount;
-
+    
+    // Check if the environment variable for Firebase Admin credentials exists as a JSON string
     if (process.env.FIREBASE_SERVICE_ACCOUNT) {
         serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
     } else {
+        // Fallback: try to read from a local file for development if provided
         try {
             serviceAccount = require(path.resolve(__dirname, "../../firebaseServiceAccount.json"));
-        } catch (_error) {
-            warnDev("Firebase Admin credentials not found. Notifications will not be sent.");
+        } catch (err) {
+            console.warn("⚠️  Firebase Admin credentials not found. Notifications will not be sent.");
         }
     }
 
@@ -27,13 +21,14 @@ try {
         initializeApp({
             credential: cert(serviceAccount),
         });
-        logDev("Firebase Admin SDK initialized successfully.");
+        console.log("🔥 Firebase Admin SDK Initialized Successfully.");
     }
 } catch (error) {
-    warnDev("Error initializing Firebase Admin SDK:", error);
+    console.error("🔥 Error initializing Firebase Admin SDK:", error);
 }
 
+// Export the messaging service directly or a wrapper object to act like admin
 module.exports = {
     apps: getApps(),
-    messaging: getMessaging,
+    messaging: getMessaging
 };

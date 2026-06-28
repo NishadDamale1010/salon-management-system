@@ -38,17 +38,17 @@ export default function App() {
     updateServiceWorker,
   } = useRegisterSW({
     onRegistered(r) {
-      if (import.meta.env.DEV) console.info("SW Registered:", r);
+      console.log("SW Registered:", r);
       // Periodically check for updates (every 1 hour)
       if (r) {
         setInterval(() => {
-          if (import.meta.env.DEV) console.info("Checking for SW updates...");
+          console.log("Checking for SW updates...");
           r.update();
         }, 60 * 60 * 1000);
       }
     },
     onRegisterError(error) {
-      if (import.meta.env.DEV) console.error("SW Registration error:", error);
+      console.error("SW Registration error:", error);
     },
   });
 

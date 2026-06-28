@@ -1,16 +1,7 @@
 import { initializeApp } from "firebase/app";
-import { getMessaging, getToken, isSupported, onMessage } from "firebase/messaging";
+import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
-const cleanEnv = (val) => val ? val.replace(/^"|"$/g, "").trim() : undefined;
-const isDev = import.meta.env.DEV;
-
-const logDev = (...args) => {
-    if (isDev) console.info(...args);
-};
-
-const warnDev = (...args) => {
-    if (isDev) console.warn(...args);
-};
+const cleanEnv = (val) => val ? val.replace(/^"|"$/g, '').trim() : undefined;
 
 const firebaseConfig = {
     apiKey: cleanEnv(import.meta.env.VITE_FIREBASE_API_KEY),
@@ -22,51 +13,19 @@ const firebaseConfig = {
 };
 
 let app;
-let messagingPromise;
+let messaging;
 
 try {
-    if (firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.messagingSenderId && firebaseConfig.appId) {
+    // Only initialize if config is present to prevent crashing if user hasn't set env vars yet
+    if (firebaseConfig.apiKey) {
         app = initializeApp(firebaseConfig);
+        messaging = getMessaging(app);
     } else {
-        warnDev("Firebase web configuration is missing. Push notifications are disabled.");
+        console.warn("⚠️ Firebase configuration is missing. Push notifications will not work.");
     }
 } catch (error) {
-    warnDev("Error initializing Firebase:", error);
+    console.error("🔥 Error initializing Firebase:", error);
 }
-
-const hasNotificationSupport = () => (
-    typeof window !== "undefined" &&
-    "Notification" in window &&
-    "serviceWorker" in navigator &&
-    (window.isSecureContext || window.location.hostname === "localhost")
-);
-
-const getMessagingInstance = async () => {
-    if (!app || !hasNotificationSupport()) return null;
-
-    if (!messagingPromise) {
-        messagingPromise = isSupported()
-            .then((supported) => supported ? getMessaging(app) : null)
-            .catch((error) => {
-                warnDev("Firebase Messaging is not supported in this browser:", error);
-                return null;
-            });
-    }
-
-    return messagingPromise;
-};
-
-export const getNotificationPermissionStatus = () => {
-    if (typeof window === "undefined" || !("Notification" in window)) {
-        return "unsupported";
-    }
-
-    if (!("serviceWorker" in navigator) || (!window.isSecureContext && window.location.hostname !== "localhost")) {
-        return "unsupported";
-    }
-
-    return Notification.permission;
-};
 
 export const requestFirebaseNotificationPermission = async () => {
     try {
@@ -98,20 +57,18 @@ export const requestFirebaseNotificationPermission = async () => {
             warnDev("No Firebase registration token was returned.");
             return null;
         }
-
-        logDev("Firebase notification token retrieved.");
-        return currentToken;
-    } catch (error) {
-        warnDev("An error occurred while retrieving the Firebase token:", error);
+    } catch (err) {
+        console.error("An error occurred while retrieving token:", err);
         return null;
     }
 };
 
-export const subscribeToForegroundMessages = async (handler) => {
-    const messaging = await getMessagingInstance();
-    if (!messaging) return () => {};
+export const onMessageListener = () =>
+    new Promise((resolve) => {
+        if (!messaging) return;
+        onMessage(messaging, (payload) => {
+            resolve(payload);
+        });
+    });
 
-    return onMessage(messaging, handler);
-};
-
-export { app };
+export { app, messaging };

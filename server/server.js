@@ -1,7 +1,5 @@
 const express = require("express");
 const dotenv = require("dotenv");
-dotenv.config();
-
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const errorMiddleware = require("./src/middleware/errorMiddleware");
@@ -21,26 +19,43 @@ const inventoryRoutes = require("./src/routes/inventoryRoutes");
 const aiRoutes = require("./src/routes/aiRoutes");
 const orderRoutes = require("./src/routes/orderRoutes");
 
+dotenv.config();
+
 const app = express();
 
 connectDB();
 
+const normalizeOrigin = (origin) => origin && origin.replace(/\/$/, "");
+
 const allowedOrigins = [
     "http://localhost:5173",
     "http://localhost:5174",
-    process.env.CLIENT_URL
-].filter(Boolean);
+    "https://salon-management-system-henna.vercel.app",
+    process.env.CLIENT_URL,
+    ...(process.env.CORS_ORIGINS || "").split(","),
+]
+    .map((origin) => normalizeOrigin(origin && origin.trim()))
+    .filter(Boolean);
+
+const isAllowedOrigin = (origin) => {
+    const normalizedOrigin = normalizeOrigin(origin);
+
+    return (
+        allowedOrigins.includes(normalizedOrigin) ||
+        /^https:\/\/salon-management-system-[a-z0-9-]+\.vercel\.app$/.test(normalizedOrigin)
+    );
+};
 
 app.use(
     cors({
         origin: function (origin, callback) {
             // Allow requests with no origin (like mobile apps, Postman)
             if (!origin) return callback(null, true);
-            if (allowedOrigins.includes(origin)) {
+            if (isAllowedOrigin(origin)) {
                 return callback(null, true);
-            } else {
-                return callback(new Error("Not allowed by CORS"));
             }
+
+            return callback(new Error(`Not allowed by CORS: ${origin}`));
         },
         credentials: true,
     })

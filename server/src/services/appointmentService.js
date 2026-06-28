@@ -62,8 +62,7 @@ const bookAppointment = async (userId, appointmentData) => {
         userId,
         "Appointment",
         "Booking Requested 📅",
-        `Your appointment request for ${appointmentDate} at ${appointmentTime} has been received and is pending confirmation.`,
-        { route: `/appointments/${appointment._id}` }
+        `Your appointment request for ${appointmentDate} at ${appointmentTime} has been received and is pending confirmation.`
     ).catch(console.error);
 
     // Notify Admins
@@ -73,8 +72,7 @@ const bookAppointment = async (userId, appointmentData) => {
             admin._id,
             "Appointment",
             "New Booking Request 🛎️",
-            `A new appointment has been requested for ${appointmentDate} at ${appointmentTime}.`,
-            { route: "/admin/appointments" }
+            `A new appointment has been requested for ${appointmentDate} at ${appointmentTime}.`
         ).catch(console.error);
     }
 

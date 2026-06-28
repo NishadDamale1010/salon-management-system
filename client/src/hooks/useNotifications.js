@@ -1,12 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import {
-    getNotificationPermissionStatus,
-    requestFirebaseNotificationPermission,
-    subscribeToForegroundMessages,
-} from "../firebase/firebase";
+import { useState, useEffect } from "react";
+import { requestFirebaseNotificationPermission, onMessageListener } from "../firebase/firebase";
 import api from "../services/api";
 import { useAuthStore } from "../store/authStore";
-import { toast } from "sonner";
+import { toast } from "sonner"; // Assuming sonner is used for toasts (from package.json)
 import { useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "../constants/queryKeys";
 
@@ -47,7 +43,6 @@ const getPayloadText = (payload) => {
 export const useNotifications = () => {
     const queryClient = useQueryClient();
     const { user } = useAuthStore();
-    const listenerId = useRef(Symbol("foreground-listener"));
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [fcmToken, setFcmToken] = useState(null);
@@ -56,13 +51,15 @@ export const useNotifications = () => {
     const fetchNotifications = useCallback(async () => {
         if (!user) return;
 
+    // Fetch initial notifications
+    const fetchNotifications = async () => {
         try {
             const response = await api.get("/notifications");
             const items = response.data || [];
             setNotifications(items);
             setUnreadCount(items.filter((n) => !n.isRead).length);
         } catch (error) {
-            warnDev("Error fetching notifications:", error);
+            console.error("Error fetching notifications:", error);
         }
     }, [user]);
 
@@ -75,38 +72,39 @@ export const useNotifications = () => {
         const storageKey = `fcm-token:${userId}`;
         if (localStorage.getItem(storageKey) === token) return;
 
+    // Register Token with backend
+    const registerToken = async (token) => {
         try {
-            await api.post("/notifications/register-token", {
-                token,
-                device: navigator.userAgent,
-                platform: "web",
+            await api.post("/notifications/register-token", { 
+                token, 
+                device: navigator.userAgent, 
+                platform: "web" 
             });
-            localStorage.setItem(storageKey, token);
+            console.log("FCM Token registered with backend");
         } catch (error) {
-            warnDev("Error registering FCM token with backend:", error);
+            console.error("Error registering token with backend:", error);
         }
-    }, [user]);
+    };
 
-    const initFCM = useCallback(async (isManual = false) => {
-        if (!user) return null;
-
-        const currentPermission = getNotificationPermissionStatus();
-        setPermissionStatus(currentPermission);
-
-        if (currentPermission === "unsupported") return null;
-        if (currentPermission === "denied") return null;
-        if (currentPermission !== "granted" && !isManual) return null;
-
-        const token = await requestFirebaseNotificationPermission();
-        setPermissionStatus(getNotificationPermissionStatus());
-
-        if (token) {
-            setFcmToken(token);
-            await registerToken(token);
+    // Initialize FCM
+    const initFCM = async (isManual = false) => {
+        if (!user) return;
+        
+        // On mobile, requestPermission on load is often blocked.
+        // We only auto-init if already granted, OR if the user manually clicked a button.
+        if (Notification.permission === "granted" || isManual) {
+            const token = await requestFirebaseNotificationPermission();
+            if (token) {
+                setFcmToken(token);
+                setPermissionStatus("granted");
+                await registerToken(token);
+            } else if (Notification.permission === "denied") {
+                setPermissionStatus("denied");
+            }
+        } else if (Notification.permission === "denied") {
+            setPermissionStatus("denied");
         }
-
-        return token;
-    }, [registerToken, user]);
+    };
 
     useEffect(() => {
         if (!user) return;
@@ -176,20 +174,20 @@ export const useNotifications = () => {
     const markAsRead = async (id) => {
         try {
             await api.patch(`/notifications/${id}/read`);
-            setNotifications((prev) => prev.map((n) => n._id === id ? { ...n, isRead: true } : n));
-            setUnreadCount((prev) => Math.max(0, prev - 1));
+            setNotifications(notifications.map(n => n._id === id ? { ...n, isRead: true } : n));
+            setUnreadCount(prev => Math.max(0, prev - 1));
         } catch (error) {
-            warnDev("Error marking notification as read:", error);
+            console.error("Error marking as read:", error);
         }
     };
 
     const markAllAsRead = async () => {
         try {
-            await api.patch("/notifications/read-all");
-            setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+            await api.patch(`/notifications/read-all`);
+            setNotifications(notifications.map(n => ({ ...n, isRead: true })));
             setUnreadCount(0);
         } catch (error) {
-            warnDev("Error marking all notifications as read:", error);
+            console.error("Error marking all as read:", error);
         }
     };
 
@@ -197,9 +195,9 @@ export const useNotifications = () => {
         notifications,
         unreadCount,
         permissionStatus,
-        requestPermission: () => initFCM(true),
+        requestPermission: () => initFCM(true), // Expose to let users manually request
         markAsRead,
         markAllAsRead,
-        fetchNotifications,
+        fetchNotifications
     };
 };
