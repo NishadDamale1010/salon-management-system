@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Star, ShoppingBag, Eye, Heart } from "lucide-react";
-import { formatCurrency } from "../../utils";
+
 import { Badge } from "../ui/Badge";
 
 export default function ProductCard({ product, onViewDetails }) {
@@ -65,23 +65,7 @@ export default function ProductCard({ product, onViewDetails }) {
         </p>
 
         <div className="mt-auto space-y-3">
-          <div className="flex items-end gap-2 flex-wrap">
-            <span className="font-display font-bold text-lg text-[var(--color-text-primary)]">
-              {formatCurrency(product.price)}
-            </span>
-            {product.originalPrice > product.price && (
-              <span className="text-xs text-[var(--color-text-muted)] line-through mb-1">
-                {formatCurrency(product.originalPrice)}
-              </span>
-            )}
-          </div>
 
-          <div className="flex items-center gap-1.5 text-xs">
-            <span className={`w-1.5 h-1.5 rounded-full ${product.stockQuantity > product.lowStockThreshold ? 'bg-emerald-500' : product.stockQuantity > 0 ? 'bg-yellow-500' : 'bg-red-500'}`}></span>
-            <span className={product.stockQuantity > product.lowStockThreshold ? 'text-emerald-500' : product.stockQuantity > 0 ? 'text-yellow-500' : 'text-red-500'}>
-              {product.stockQuantity > product.lowStockThreshold ? 'In Stock' : product.stockQuantity > 0 ? 'Low Stock' : 'Out of Stock'}
-            </span>
-          </div>
           
           <button 
             onClick={() => onViewDetails(product)}

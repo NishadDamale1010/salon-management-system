@@ -107,16 +107,7 @@ export default function ProductModal({ product, isOpen, onClose }) {
                 </span>
               </div>
 
-              <div className="flex items-end gap-3 mb-6 bg-[var(--color-surface-card)] p-4 rounded-2xl border border-[var(--color-border)] inline-flex">
-                <span className="font-display font-bold text-3xl text-gradient-rose">
-                  {formatCurrency(product.price)}
-                </span>
-                {product.originalPrice > product.price && (
-                  <span className="text-sm text-[var(--color-text-muted)] line-through mb-1">
-                    {formatCurrency(product.originalPrice)}
-                  </span>
-                )}
-              </div>
+
             </div>
 
             <div className="space-y-6">
