@@ -21,8 +21,8 @@ export default function Awards() {
                   className="rounded-2xl overflow-hidden bg-[var(--color-surface-card)] border border-[var(--color-border)]"
                 >
                   {award.image && (
-                    <div className="w-full h-72 bg-gradient-to-b from-gray-50 to-gray-100 dark:from-neutral-900 dark:to-neutral-800 flex items-center justify-center p-6">
-                      <img src={award.image} alt={award.title} className="max-w-full max-h-full object-contain drop-shadow-2xl" />
+                    <div className="overflow-hidden rounded-t-2xl">
+                      <img src={award.image} alt={award.title} className="w-full h-auto" />
                     </div>
                   )}
                   <div className="p-6">
