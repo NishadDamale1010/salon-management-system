@@ -20,11 +20,7 @@ export default function Awards() {
                 <motion.div key={award._id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
                   className="rounded-2xl overflow-hidden bg-[var(--color-surface-card)] border border-[var(--color-border)]"
                 >
-                  {award.image && (
-                    <div className="w-full h-72 bg-gradient-to-b from-gray-50 to-gray-100 dark:from-neutral-900 dark:to-neutral-800 flex items-center justify-center p-6">
-                      <img src={award.image} alt={award.title} className="max-w-full max-h-full object-contain drop-shadow-2xl" />
-                    </div>
-                  )}
+                  {award.image && <img src={award.image} alt={award.title} className="w-full h-48 object-cover" />}
                   <div className="p-6">
                     <h3 className="font-display font-bold text-[var(--color-text-primary)] text-xl mb-2">{award.title}</h3>
                     <p className="text-sm text-[var(--color-text-muted)]">{award.description}</p>
