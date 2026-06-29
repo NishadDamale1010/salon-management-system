@@ -117,12 +117,10 @@ export const aiService = {
     return res.data;
   },
   parseProducts: async (rawText) => {
-    const res = await api.post("/ai/parse-products", { rawText });
-    return res.data;
+    return await api.post("/ai/parse-products", { rawText });
   },
   parseServices: async (rawText) => {
-    const res = await api.post("/ai/parse-services", { rawText });
-    return res.data;
+    return await api.post("/ai/parse-services", { rawText });
   },
 };
 
