@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { visitorService } from "../../services";
 import { ArrowLeft, Eye, Clock, MousePointer, Users, Globe, Monitor, Smartphone, Check, X } from "lucide-react";
 import { formatDuration, timeAgo } from "../../utils";
-import { SkeletonCard } from "../../components/ui/Skeleton";
+import { Skeleton, SkeletonCard } from "../../components/ui/Skeleton";
 
 export default function VisitorDetails() {
   const { id } = useParams();
