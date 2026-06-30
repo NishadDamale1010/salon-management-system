@@ -223,7 +223,6 @@ export default function Home() {
                 {/* Ping animation behind */}
                 <div className="absolute inset-0 rounded-2xl border-2 border-rose-400 animate-ping opacity-20" />
                 <div className="flex flex-col items-center gap-0.5">
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-rose-200">Limited Time</span>
                   <span className="text-xs md:text-sm font-black text-white whitespace-nowrap drop-shadow-sm">Free Registration 🎉</span>
                 </div>
               </div>
