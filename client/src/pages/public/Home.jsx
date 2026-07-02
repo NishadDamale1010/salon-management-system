@@ -3,18 +3,16 @@ import { Link } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import {
   Sparkles, Calendar, Star, Gift,
-  ShoppingBag, Tag, Users, Crown, Award,
-  ArrowRight, Video, MessageCircle, Heart, ChevronRight,
-  Clock, ShieldCheck, CheckCircle2, Wallet, Scissors, CalendarCheck2, CheckCircle, Smartphone
+  ArrowRight, Video,
+  Clock, ShieldCheck, CheckCircle, Smartphone
 } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
-import { SALON_WHATSAPP, SALON_INSTAGRAM } from "../../constants";
 import { serviceService, inventoryService } from "../../services";
 import { QUERY_KEYS } from "../../constants/queryKeys";
 import ServicesSection from "../../components/home/ServicesSection";
 import FeaturedProductsSection from "../../components/home/FeaturedProductsSection";
 import AIConsultant from "../../components/ai/AIConsultant";
-import FloatingReviews from "../../components/home/FloatingReviews";
+import LandingChampionBoard from "../../components/home/LandingChampionBoard";
 
 /* ─── Custom hook: fire once when element enters viewport ─── */
 function useScrollReveal(threshold = 0.12) {
@@ -43,57 +41,6 @@ const HeroBadge = ({ children, className = "", delay = 0 }) => (
   </div>
 );
 
-/* ─── Quick-link card ─── */
-const QuickLink = ({ icon: Icon, label, subtext, to, bg, fg }) => (
-  <Link
-    to={to}
-    className="flex flex-col items-center p-3 bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)] active:scale-95 transition-transform snap-start min-w-[80px] shrink-0 select-none"
-  >
-    <div className={`w-11 h-11 ${bg} rounded-xl flex items-center justify-center mb-2`}>
-      <Icon className={`w-5 h-5 ${fg}`} />
-    </div>
-    <span className="text-[11px] font-bold text-[var(--color-text-primary)] leading-tight text-center">{label}</span>
-    <span className="text-[9px] text-[var(--color-text-muted)] leading-tight text-center mt-0.5">{subtext}</span>
-  </Link>
-);
-
-/* ─── Animated marquee strip ─── */
-const MARQUEE_ITEMS = [
-  "✨ 5-Star Rated Salon",
-  "💄 Happy Clients",
-  "🌸 Premium Beauty",
-  "⭐ Book Today",
-  "💅 Expert Stylists",
-  "🎁 Loyalty Rewards",
-];
-const MarqueeStrip = () => {
-  const doubled = [...MARQUEE_ITEMS, ...MARQUEE_ITEMS];
-  return (
-    <div className="overflow-hidden bg-[var(--color-rose-500)] py-2 -mx-4">
-      <div className="home-marquee flex gap-10 w-max">
-        {doubled.map((item, i) => (
-          <span key={i} className="text-white text-xs font-semibold shrink-0">{item}</span>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-/* ─── Section header with optional "See all" link ─── */
-const SectionHeader = ({ title, accent, to, linkText = "See all" }) => (
-  <div className="flex items-center justify-between mb-4">
-    <h2 className="text-xl font-display font-bold text-[var(--color-text-primary)]">
-      {title} <span className="text-[var(--color-rose-500)]">{accent}</span>
-    </h2>
-    {to && (
-      <Link to={to} className="text-xs font-semibold text-[var(--color-rose-500)] flex items-center gap-0.5 active:opacity-70">
-        {linkText} <ChevronRight className="w-3.5 h-3.5" />
-      </Link>
-    )}
-  </div>
-);
-
-/* ══════════════════════════════════════════════════════════════ */
 export default function Home() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const user = useAuthStore((s) => s.user);
@@ -102,10 +49,8 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { const t = setTimeout(() => setMounted(true), 80); return () => clearTimeout(t); }, []);
 
-  /* scroll-reveal refs for each section below the hero */
-  const [quickRef, quickVis] = useScrollReveal();
   const [feedRef, feedVis] = useScrollReveal();
-  const [promoRef, promoVis] = useScrollReveal();
+  const [testimRef, testimVis] = useScrollReveal();
 
   const bookLink = isAuthenticated
     ? (user?.role === "admin" ? "/admin" : "/customer")
@@ -114,442 +59,231 @@ export default function Home() {
   const { data: servicesData } = useQuery({ queryKey: QUERY_KEYS.SERVICES, queryFn: serviceService.getAll });
   const { data: inventoryData } = useQuery({ queryKey: QUERY_KEYS.INVENTORY, queryFn: inventoryService.getProducts });
 
-  const quickLinks = [
-    { icon: Calendar, label: "Book", subtext: "Appointment", to: bookLink, bg: "bg-rose-50", fg: "text-[var(--color-rose-500)]" },
-    { icon: Sparkles, label: "Journey", subtext: "Progress", to: isAuthenticated ? "/customer/journey" : "/register", bg: "bg-purple-50", fg: "text-purple-500" },
-    { icon: Video, label: "GlowFeed", subtext: "Community", to: "/feed", bg: "bg-pink-50", fg: "text-pink-500" },
-    { icon: Crown, label: "Rewards", subtext: "Earn & Redeem", to: isAuthenticated ? "/customer/rewards" : "/register", bg: "bg-amber-50", fg: "text-amber-500" },
-    { icon: ShoppingBag, label: "Shop", subtext: "Products", to: "/shop", bg: "bg-sky-50", fg: "text-sky-500" },
-    { icon: Award, label: "Awards", subtext: "Trophies", to: "/awards", bg: "bg-emerald-50", fg: "text-emerald-500" },
-    { icon: Gift, label: "Gift", subtext: "Cards", to: "/shop", bg: "bg-rose-50", fg: "text-[var(--color-rose-500)]" },
-    { icon: Users, label: "Refer", subtext: "Invite Friends", to: isAuthenticated ? "/customer/rewards" : "/register", bg: "bg-violet-50", fg: "text-violet-500" },
-  ];
-
   return (
-    <div className="min-h-screen bg-[var(--color-surface)] pb-28 relative overflow-x-hidden">
+    <div className="min-h-screen bg-white pb-20 relative overflow-x-hidden max-w-md mx-auto shadow-2xl md:max-w-6xl md:shadow-none">
 
-      {/* ── ambient background blobs ── */}
-      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden" aria-hidden>
-        <div className="home-blob-1" />
-        <div className="home-blob-2" />
-      </div>
-
-      <main className="max-w-6xl mx-auto px-4 space-y-8 pt-4">
+      <main className="px-4 space-y-8 pt-2">
 
         {/* ════════════════════════════════════════════════════
             HERO
-            mobile:  image on top  →  text below  (flex-col-reverse)
-            desktop: text on left  ←  image right (md:flex-row)
         ════════════════════════════════════════════════════ */}
         <section
-          className={`flex flex-col-reverse md:flex-row items-center gap-8 md:gap-16
+          className={`flex flex-row items-center gap-3 md:gap-8 
                       home-hero-enter ${mounted ? "home-hero-visible" : ""}`}
         >
 
-          {/* ── Hero text (Optimized for CRO) ── */}
-          <div className="flex-1 space-y-6 text-center md:text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-rose-50 border border-rose-100 text-rose-600 text-xs font-bold shadow-sm">
-              <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-              Official Gayatri Beauty Studio App
+          {/* ── Hero text ── */}
+          <div className="flex-1 space-y-3 text-left order-1 py-4">
+            <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-rose-50 border border-rose-100 text-rose-600 text-[8px] sm:text-[10px] font-bold shadow-sm">
+              <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-rose-500 animate-pulse" />
+              Gayatri Beauty Studio
             </div>
 
-            <h1 className="text-[2.5rem] leading-[1.1] md:text-[3.5rem] lg:text-[4.2rem] font-display font-black text-gray-900 tracking-tight">
-              Book Your Salon Appointment in <br className="hidden md:block" />
-              <span className="relative inline-block text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-purple-600">
-                30 Seconds.
-                <span className="absolute -bottom-1.5 left-0 h-[4px] w-full bg-gradient-to-r from-rose-400 via-pink-400 to-transparent rounded-full opacity-70" />
-              </span>
+            <h1 className="text-xl sm:text-3xl md:text-5xl lg:text-6xl font-display font-black text-gray-900 tracking-tight leading-[1.1]">
+              Your Beauty. <br/>
+              Our Expertise. <br/>
+              <span className="text-rose-500">Timeless You.</span>
             </h1>
 
-            <p className="text-gray-600 text-[15px] md:text-lg max-w-lg mx-auto md:mx-0 leading-relaxed font-medium">
-              Skip the calls. Book instantly, earn loyalty rewards, and manage your beauty schedule with zero wait time.
+            <p className="text-gray-600 text-[9px] sm:text-xs md:text-base max-w-[160px] sm:max-w-lg font-medium leading-tight">
+              Book your favorite salon services in just a few taps. Earn Glow Points & unlock perks.
             </p>
 
-            {/* Benefit Microcopy */}
-            <div className="flex flex-wrap justify-center md:justify-start gap-x-4 gap-y-2 text-sm text-gray-700 font-semibold mb-2">
-              <div className="flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-emerald-500" /> Free Registration</div>
-              <div className="flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-emerald-500" /> No Card Required</div>
-              <div className="flex items-center gap-1.5 text-rose-600 font-bold"><Clock className="w-4 h-4" /> Book Instantly</div>
-            </div>
-
             {/* CTAs */}
-            <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start w-full max-w-md mx-auto md:mx-0">
+            <div className="flex flex-col sm:flex-row gap-2 w-full pt-2">
               <Link
-                to="/register"
-                className="flex-1 flex items-center justify-center gap-2 px-6 py-4
-                           bg-gradient-to-r from-rose-500 to-rose-600 text-white font-bold rounded-2xl
-                           shadow-[0_8px_20px_rgba(244,63,94,0.3)] hover:shadow-[0_12px_25px_rgba(244,63,94,0.4)] hover:-translate-y-0.5 active:scale-95 transition-all text-base animate-pulse"
+                to={bookLink}
+                className="inline-flex items-center justify-center px-3 py-2 sm:px-4 sm:py-2.5
+                           bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-lg sm:rounded-xl
+                           shadow-md active:scale-95 transition-transform text-[9px] sm:text-xs"
               >
-                Create Free Account <ArrowRight className="w-5 h-5" />
+                Book Appointment
               </Link>
-              {isAuthenticated && (
-                <Link
-                  to="/book"
-                  className="flex-1 flex items-center justify-center px-6 py-4
-                             bg-white text-rose-600 border-2 border-rose-100 hover:bg-rose-50 hover:border-rose-200
-                             font-bold rounded-2xl active:scale-95 transition-all text-base"
-                >
-                  Book Appointment
-                </Link>
-              )}
-            </div>
-
-            {/* Trust Signals */}
-            <div className="flex items-center justify-center md:justify-start gap-4 pt-4 border-t border-gray-100">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-gray-400" />
-                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">100% Secure Data</span>
-              </div>
-              <div className="w-1.5 h-1.5 rounded-full bg-gray-200" />
-              <div className="flex items-center gap-2">
-                <Star className="w-5 h-5 text-amber-400 fill-amber-400" />
-                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">5-Star Rated</span>
-              </div>
             </div>
           </div>
 
-          {/* ── Hero image (appears FIRST on mobile via flex-col-reverse) ── */}
-          <div className="flex-1 relative w-full max-w-[320px] md:max-w-lg mx-auto">
-            {/* soft glow halo behind the image */}
-            <div className="absolute inset-0 rounded-[2.5rem] bg-gradient-to-br from-rose-200/70 to-pink-200/50 blur-3xl scale-110" aria-hidden />
+          {/* ── Hero image ── */}
+          <div className="flex-1 relative w-full max-w-[150px] sm:max-w-[220px] md:max-w-lg mx-auto order-2 mt-2 md:mt-0">
+            {/* Background Pink Circle Blob */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[110%] aspect-square rounded-full bg-gradient-to-tr from-pink-100 to-rose-50 blur-xl" aria-hidden />
 
             {/* image frame */}
-            <div className="relative rounded-[2.5rem] overflow-hidden border-4 border-white/80 shadow-2xl aspect-[3/4] z-10">
-              <img src="/hero-girl.png" alt="Gayatri Beauty Studio" className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
-            </div>
-
-            {/* Promo Bubble */}
-            <div className="absolute -right-4 md:-right-8 top-6 z-30 animate-bounce" style={{ animationDuration: '3s' }}>
-              <div className="relative bg-gradient-to-r from-rose-500 to-purple-600 rounded-2xl shadow-[0_8px_20px_rgba(244,63,94,0.4)] px-4 py-2.5 border-2 border-white/20 backdrop-blur-md">
-                {/* Ping animation behind */}
-                <div className="absolute inset-0 rounded-2xl border-2 border-rose-400 animate-ping opacity-20" />
-                <div className="flex flex-col items-center gap-0.5">
-                  <span className="text-xs md:text-sm font-black text-white whitespace-nowrap drop-shadow-sm">Free Registration 🎉</span>
-                </div>
-              </div>
+            <div className="relative z-10 flex justify-center">
+              <img src="/hero-girl.png" alt="Gayatri Beauty Studio" className="w-[140px] sm:w-[220px] h-auto drop-shadow-xl mix-blend-multiply" style={{ objectFit: 'contain' }} />
             </div>
 
             {/* rating badge */}
-            <HeroBadge className="-left-3 top-1/4" delay={0}>
-              <div className="flex items-center gap-1.5">
-                <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                <div>
-                  <div className="text-xs font-bold text-[var(--color-text-primary)]">4.9 / 5</div>
-                  <div className="text-[9px] text-[var(--color-text-muted)]">Rating</div>
+            <HeroBadge className="-left-4 top-1/4 scale-[0.6] origin-left" delay={0}>
+              <div className="flex flex-col items-center gap-0.5">
+                <div className="flex items-center gap-1 text-sm font-black text-gray-900">
+                  <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+                  4.9/5
                 </div>
+                <div className="text-[9px] font-bold text-amber-500">2.8k+ Reviews</div>
               </div>
             </HeroBadge>
 
-            {/* clients badge */}
-            <HeroBadge className="-right-3 bottom-1/3" delay={1.2}>
-              <div className="flex items-center gap-1.5">
-                <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
-                <div>
-                  <div className="text-xs font-bold text-[var(--color-text-primary)]">😊</div>
-                  <div className="text-[9px] text-[var(--color-text-muted)]">Happy Clients</div>
-                </div>
-              </div>
+            {/* Hygienic badge */}
+            <HeroBadge className="-right-6 top-4 scale-[0.6] origin-right" delay={1.2}>
+               <div className="flex items-center gap-2">
+                 <div className="w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center text-rose-500">
+                    <ShieldCheck className="w-4 h-4" />
+                 </div>
+                 <div className="flex flex-col">
+                    <span className="text-[10px] font-bold text-gray-900">Hygienic & Safe</span>
+                    <span className="text-[8px] text-gray-500">Your safety is our priority</span>
+                 </div>
+               </div>
             </HeroBadge>
 
-            {/* bottom social-proof pill */}
-            <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 z-20 whitespace-nowrap">
-              <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-2xl shadow-lg border border-rose-100">
-                <div className="flex -space-x-1.5">
-                  {["from-rose-300 to-pink-400", "from-purple-300 to-indigo-400", "from-amber-300 to-orange-400"].map((g, i) => (
-                    <div key={i} className={`w-5 h-5 rounded-full bg-gradient-to-br ${g} border-[1.5px] border-white`} />
-                  ))}
-                </div>
-                <span className="text-[10px] font-semibold text-[var(--color-text-primary)]">Loved by all</span>
-                <Heart className="w-3 h-3 text-rose-500 fill-rose-500" />
-              </div>
-            </div>
-
-            {/* floating sparkles */}
-            <Sparkles className="absolute top-3 right-6 z-20 w-5 h-5 text-yellow-400 drop-shadow animate-float" style={{ animationDelay: "0.4s" }} aria-hidden />
-            <Sparkles className="absolute top-16 -left-1 z-20 w-3.5 h-3.5 text-rose-400 drop-shadow animate-float" style={{ animationDelay: "1.7s" }} aria-hidden />
+            {/* New Here badge */}
+            <HeroBadge className="-right-4 bottom-4 scale-[0.6] origin-right" delay={0.5}>
+               <div className="flex items-center gap-2">
+                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-400 to-rose-600 flex items-center justify-center text-white">
+                    <Gift className="w-5 h-5" />
+                 </div>
+                 <div className="flex flex-col">
+                    <span className="text-[11px] font-bold text-gray-900">New Here?</span>
+                    <span className="text-[8px] text-gray-500 max-w-[100px] leading-tight">Create an account and get 50 Glow Points!</span>
+                 </div>
+               </div>
+            </HeroBadge>
           </div>
         </section>
 
-        {/* ── marquee ── */}
-        <MarqueeStrip />
-
-        {/* ── Floating Reviews ── */}
-        <FloatingReviews />
-
         {/* ════════════════════════════════════════════════════
-            QUICK LINKS
+            CHAMPION BOARD
         ════════════════════════════════════════════════════ */}
-        <section
-          ref={quickRef}
-          className={`home-reveal ${quickVis ? "home-reveal-visible" : ""}`}
-        >
-          <SectionHeader title="Quick" accent="Access" />
-          <div className="flex gap-2.5 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-1 -mx-1 px-1">
-            {quickLinks.map((link) => (
-              <QuickLink key={link.label} {...link} />
-            ))}
-          </div>
+        <section className="pt-6">
+           <LandingChampionBoard />
         </section>
 
         {/* ════════════════════════════════════════════════════
-            SOCIAL PROOF SECTION
+            SERVICES
         ════════════════════════════════════════════════════ */}
-        <section className="py-8 bg-gradient-to-b from-transparent via-rose-50/50 to-transparent rounded-[3rem] px-4 md:px-8 home-reveal home-reveal-visible">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-display font-black text-gray-900 mb-3">Trusted by multiple Happy Clients</h2>
-            <p className="text-gray-500 text-sm max-w-md mx-auto font-medium">Join our growing community of beauty enthusiasts.</p>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            {[
-              { label: "5-Star Rating", value: "4.9/5", icon: Star, color: "text-amber-500" },
-              { label: "Happy Clients", value: "multiple", icon: Heart, color: "text-rose-500" },
-              { label: "Appointments", value: "fast", icon: Calendar, color: "text-purple-500" },
-              { label: "Rewards Given", value: "50+", icon: Gift, color: "text-emerald-500" },
-            ].map((stat, i) => (
-              <div key={i} className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm text-center">
-                <stat.icon className={`w-6 h-6 mx-auto mb-2 ${stat.color}`} />
-                <div className="text-2xl font-black text-gray-900">{stat.value}</div>
-                <div className="text-xs text-gray-500 font-medium">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-
-          <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm max-w-2xl mx-auto">
-            <div className="flex items-start gap-4">
-              <div className="flex-shrink-0">
-                <div className="w-12 h-12 bg-gradient-to-br from-rose-400 to-purple-400 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                  P
-                </div>
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-1 mb-1">
-                  {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 text-amber-400 fill-amber-400" />)}
-                </div>
-                <p className="text-gray-700 text-sm font-medium mb-2">"The app made booking so easy! I earned my first reward within a week. Highly recommend!"</p>
-                <p className="text-gray-500 text-xs font-semibold">Priya S. • Regular Customer</p>
-              </div>
-            </div>
-          </div>
-        </section>
+        <div id="services">
+          <ServicesSection
+            services={servicesData?.data || []}
+            bookLink={bookLink}
+            isAuthenticated={isAuthenticated}
+          />
+        </div>
 
         {/* ════════════════════════════════════════════════════
-            WHAT YOU GET SECTION
-        ════════════════════════════════════════════════════ */}
-        <section className="py-8 home-reveal home-reveal-visible">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-display font-black text-gray-900 mb-3">What You Get When You Join</h2>
-            <p className="text-gray-500 text-sm max-w-md mx-auto font-medium">Premium benefits, completely free.</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto">
-            {[
-              { icon: Gift, title: "Free Loyalty Points", desc: "Earn points on every booking automatically", highlight: true },
-              { icon: Wallet, title: "Track Your Progress", desc: "See your beauty journey grow", highlight: false },
-              { icon: Crown, title: "VIP Early Access", desc: "Be first to know about new offers", highlight: false },
-              { icon: Smartphone, title: "Priority Booking", desc: "Skip the queue, book instantly", highlight: false },
-              { icon: CalendarCheck2, title: "Easy Rescheduling", desc: "Change appointments in 1 tap", highlight: false },
-              { icon: MessageCircle, title: "Direct Support", desc: "Chat with our team anytime", highlight: false },
-            ].map((benefit, i) => (
-              <div key={i} className={`rounded-2xl p-5 border ${benefit.highlight ? 'bg-gradient-to-br from-rose-50 to-purple-50 border-rose-200' : 'bg-white border-gray-100'} shadow-sm`}>
-                <div className="flex items-start gap-4">
-                  <div className={`w-12 h-12 rounded-xl ${benefit.highlight ? 'bg-rose-500' : 'bg-gray-100'} flex items-center justify-center flex-shrink-0`}>
-                    <benefit.icon className={`w-6 h-6 ${benefit.highlight ? 'text-white' : 'text-gray-600'}`} />
-                  </div>
-                  <div>
-                    <h3 className={`font-bold ${benefit.highlight ? 'text-rose-600' : 'text-gray-900'} mb-1`}>{benefit.title}</h3>
-                    <p className="text-sm text-gray-500">{benefit.desc}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-8 flex justify-center">
-            <Link
-              to="/register"
-              className="px-8 py-4 bg-gradient-to-r from-rose-500 to-purple-600 text-white font-bold rounded-2xl shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all flex items-center gap-2"
-            >
-              Start Earning Rewards Now <ArrowRight className="w-5 h-5" />
-            </Link>
-          </div>
-        </section>
-
-        {/* ════════════════════════════════════════════════════
-            WHY USE OUR APP (CRO Benefit Cards)
-        ════════════════════════════════════════════════════ */}
-        <section className="py-6 home-reveal home-reveal-visible">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-display font-black text-gray-900 mb-3">Why Book on the App?</h2>
-            <p className="text-gray-500 text-sm max-w-md mx-auto font-medium">Skip the wait and unlock premium benefits.</p>
-          </div>
-          
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {[
-              { icon: Clock, title: "Book 24/7", desc: "Schedule your visit anytime, even at midnight.", color: "text-blue-500", bg: "bg-blue-50" },
-              { icon: Smartphone, title: "Zero Wait Time", desc: "Skip the lobby. Instant confirmation.", color: "text-rose-500", bg: "bg-rose-50" },
-              { icon: Scissors, title: "Choose Stylist", desc: "Pick your preferred expert.", color: "text-purple-500", bg: "bg-purple-50" },
-              { icon: Wallet, title: "Digital Wallet", desc: "Earn loyalty points on every visit.", color: "text-amber-500", bg: "bg-amber-50" },
-              { icon: CalendarCheck2, title: "1-Tap Reschedule", desc: "Change plans with zero hassle.", color: "text-emerald-500", bg: "bg-emerald-50" },
-              { icon: Star, title: "App-Only Offers", desc: "Unlock exclusive VIP discounts.", color: "text-pink-500", bg: "bg-pink-50" },
-            ].map((benefit, i) => (
-              <div key={i} className="bg-white rounded-3xl p-5 border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transition-shadow group">
-                <div className={`w-12 h-12 rounded-2xl ${benefit.bg} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                  <benefit.icon className={`w-6 h-6 ${benefit.color}`} />
-                </div>
-                <h3 className="font-bold text-gray-900 mb-1.5">{benefit.title}</h3>
-                <p className="text-xs text-gray-500 leading-relaxed font-medium">{benefit.desc}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ════════════════════════════════════════════════════
-            HOW IT WORKS (4-Step Timeline)
-        ════════════════════════════════════════════════════ */}
-        <section className="py-8 bg-gradient-to-b from-transparent via-rose-50/50 to-transparent rounded-[3rem] px-4 md:px-8 home-reveal home-reveal-visible mb-6">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-display font-black text-gray-900 mb-3">How It Works</h2>
-            <p className="text-gray-500 text-sm max-w-md mx-auto font-medium">Your beauty journey in 4 simple steps.</p>
-          </div>
-
-          <div className="max-w-2xl mx-auto space-y-6 relative">
-            {/* Vertical Line */}
-            <div className="absolute top-4 bottom-4 left-[27px] w-1 bg-gradient-to-b from-rose-200 to-purple-200 rounded-full" />
-            
-            {[
-              { num: 1, title: "Create Free Account", desc: "Takes 15 seconds. No credit card required.", icon: Smartphone },
-              { num: 2, title: "Choose Service & Stylist", desc: "Browse our premium catalog and select your favorite expert.", icon: Scissors },
-              { num: 3, title: "Pick Your Perfect Time", desc: "View real-time availability and lock in your slot instantly.", icon: CalendarCheck2 },
-              { num: 4, title: "Visit & Earn Rewards", desc: "Enjoy your service and accumulate loyalty points automatically!", icon: Gift },
-            ].map((step, idx) => (
-              <div key={idx} className="relative pl-16 flex items-start gap-4">
-                {/* Number Orb */}
-                <div className="absolute left-0 top-0 w-14 h-14 bg-white rounded-2xl border-2 border-rose-100 shadow-md flex items-center justify-center text-rose-500 font-black text-xl z-10">
-                  {step.num}
-                </div>
-                
-                <div className="bg-white rounded-3xl p-5 md:p-6 border border-gray-100 shadow-sm flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <step.icon className="w-5 h-5 text-gray-400" />
-                    <h3 className="text-lg font-bold text-gray-900">{step.title}</h3>
-                  </div>
-                  <p className="text-sm text-gray-500 font-medium">{step.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-10 flex justify-center">
-             <Link to={isAuthenticated ? "/book" : "/register"} className="px-8 py-4 bg-gray-900 text-white font-bold rounded-2xl shadow-xl hover:-translate-y-1 transition-transform flex items-center gap-2">
-               Start Your Journey <ArrowRight className="w-5 h-5" />
-             </Link>
-          </div>
-        </section>
-
-        {/* ════════════════════════════════════════════════════
-            GLOWFEED BANNER
+            GLOWFEED BANNER (Replaces Refer & Earn)
         ════════════════════════════════════════════════════ */}
         <section
           ref={feedRef}
           className={`home-reveal ${feedVis ? "home-reveal-visible" : ""}`}
         >
-          <div className="home-glowfeed-card relative rounded-3xl p-5 flex flex-col md:flex-row items-center gap-4 overflow-hidden">
-            {/* background */}
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-50 to-pink-50" aria-hidden />
-            <div className="absolute top-0 right-0 w-44 h-44 bg-pink-200/30 rounded-full blur-3xl" aria-hidden />
-
-            <div className="relative z-10 flex items-center gap-4">
-              <div className="relative shrink-0">
-                <div className="w-14 h-14 bg-gradient-to-br from-purple-100 to-pink-100 text-purple-600 rounded-2xl flex items-center justify-center border border-purple-200 rotate-3 shadow-inner">
-                  <Video className="w-7 h-7" />
+          <div className="relative rounded-3xl bg-gradient-to-r from-pink-50 to-rose-100 p-6 flex flex-col md:flex-row items-center justify-between overflow-hidden shadow-sm border border-rose-100">
+             <div className="relative z-10 flex-1 text-center md:text-left space-y-2 mb-6 md:mb-0">
+               <h3 className="text-xl font-display font-black text-rose-600">Join the GlowFeed!</h3>
+               <p className="text-xs text-gray-600 max-w-[200px] mx-auto md:mx-0 leading-relaxed font-medium">
+                 Discover trends, share your looks, and connect with our beauty community.
+               </p>
+               <Link
+                 to="/feed"
+                 className="inline-flex items-center justify-center gap-2 px-5 py-2.5 mt-2
+                            bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold rounded-full
+                            shadow-md active:scale-95 transition-transform"
+               >
+                 Explore GlowFeed <ArrowRight className="w-3.5 h-3.5" />
+               </Link>
+             </div>
+             
+             {/* Illustration Side */}
+             <div className="relative z-10 w-40 h-32 flex-shrink-0">
+                <div className="absolute inset-0 flex items-center justify-center">
+                   <div className="w-24 h-24 bg-rose-200/50 rounded-full animate-pulse" />
+                   <Video className="w-16 h-16 text-rose-500 absolute drop-shadow-xl" />
+                   <Star className="w-6 h-6 text-yellow-400 fill-yellow-400 absolute -top-2 right-2 animate-bounce" />
+                   <Sparkles className="w-5 h-5 text-purple-400 absolute bottom-0 left-2 animate-bounce" style={{ animationDelay: '0.5s' }} />
                 </div>
-                {/* yellow sparkle dot */}
-                <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center shadow">
-                  <Sparkles className="w-3 h-3 text-white" />
-                </div>
-              </div>
-              <div>
-                <h3 className="text-base font-display font-bold text-[var(--color-text-primary)] mb-0.5">Join the GlowFeed!</h3>
-                <p className="text-xs text-[var(--color-text-muted)]">Discover trends & share your looks</p>
-              </div>
-            </div>
-
-            <Link
-              to="/feed"
-              className="relative z-10 w-full md:w-auto flex items-center justify-center gap-2 px-5 py-3
-                         bg-purple-500 hover:bg-purple-600 text-white text-sm font-bold rounded-2xl
-                         shadow-lg shadow-purple-500/25 active:scale-95 transition-transform"
-            >
-              Explore <Sparkles className="w-3.5 h-3.5" />
-            </Link>
+             </div>
           </div>
         </section>
 
         {/* ════════════════════════════════════════════════════
-            SERVICES & PRODUCTS  (these sections have their own reveal)
+            FEATURES GRID
         ════════════════════════════════════════════════════ */}
-        <ServicesSection
-          services={servicesData?.data || []}
-          bookLink={bookLink}
-          isAuthenticated={isAuthenticated}
-        />
-        <FeaturedProductsSection products={inventoryData?.data || []} />
+        <section className="py-4">
+           <div className="grid grid-cols-3 gap-y-6 gap-x-2">
+             {[
+               { icon: Calendar, title: "Easy & Fast\nBooking", color: "text-rose-500" },
+               { icon: Sparkles, title: "Verified\nBeauticians", color: "text-rose-500" },
+               { icon: Gift, title: "Premium\nProducts", color: "text-rose-500" },
+               { icon: ShieldCheck, title: "Hygienic\nEnvironment", color: "text-rose-500" },
+               { icon: Clock, title: "24/7 Customer\nSupport", color: "text-rose-500" },
+               { icon: CheckCircle, title: "Secure\nPayments", color: "text-rose-500" },
+             ].map((feat, i) => (
+               <div key={i} className="flex flex-col items-center text-center gap-2">
+                  <feat.icon className={`w-6 h-6 ${feat.color}`} />
+                  <span className="text-[10px] font-bold text-gray-800 whitespace-pre-line leading-snug">{feat.title}</span>
+               </div>
+             ))}
+           </div>
+        </section>
 
         {/* ════════════════════════════════════════════════════
-            PROMO BANNERS
+            TESTIMONIALS
         ════════════════════════════════════════════════════ */}
-        <section
-          ref={promoRef}
-          className={`grid grid-cols-2 gap-3 home-reveal ${promoVis ? "home-reveal-visible" : ""}`}
-        >
-          {/* Loyalty */}
-          <div className="bg-[#FFF4E6] border border-[#FFE8CC] rounded-2xl p-4 relative overflow-hidden min-h-[130px]">
-            <h3 className="text-[#D97706] font-display font-bold text-sm mb-1">Loyalty Rewards</h3>
-            <p className="text-[9px] text-[#92400E] mb-3 leading-snug">Earn points on every booking!</p>
-            <Link
-              to={isAuthenticated ? "/customer/rewards" : "/register"}
-              className="inline-flex items-center gap-1 px-3 py-1.5 bg-white text-[#D97706] text-[10px] font-bold rounded-xl shadow-sm active:scale-95 transition-transform"
-            >
-              Explore <ArrowRight className="w-2.5 h-2.5" />
-            </Link>
-            
-          </div>
+        <section ref={testimRef} className={`home-reveal ${testimVis ? "home-reveal-visible" : ""} py-4`}>
+           <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-display font-bold text-gray-900">What Our Clients Say</h2>
+              <span className="text-[10px] font-bold text-rose-500 flex items-center">View All Reviews <ArrowRight className="w-3 h-3 ml-0.5" /></span>
+           </div>
+           
+           <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4 -mx-4 px-4 scrollbar-hide">
+              {[
+                { name: "Priya Sharma", text: "Absolutely love the services! The staff is so professional and the results are always amazing.", stars: 5 },
+                { name: "Sneha Patil", text: "The best salon experience I've ever had. Highly recommend Gayatri Beauty Studio!", stars: 5 },
+                { name: "Anjali Deshmukh", text: "Great ambiance, excellent service and super friendly staff. Will definitely come again!", stars: 5 }
+              ].map((rev, i) => (
+                <div key={i} className="snap-center w-64 shrink-0 bg-white border border-rose-100 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+                   <div>
+                     <div className="text-rose-400 font-serif text-3xl leading-none h-4">"</div>
+                     <p className="text-xs text-gray-600 font-medium leading-relaxed mt-2">{rev.text}</p>
+                   </div>
+                   <div className="mt-4 flex items-center gap-3">
+                     <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
+                       <img src={`https://api.dicebear.com/7.x/notionists/svg?seed=${rev.name}`} alt={rev.name} className="w-full h-full" />
+                     </div>
+                     <div>
+                       <div className="text-[11px] font-bold text-gray-900">{rev.name}</div>
+                       <div className="flex gap-0.5">
+                         {[...Array(rev.stars)].map((_, j) => <Star key={j} className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />)}
+                       </div>
+                     </div>
+                   </div>
+                </div>
+              ))}
+           </div>
+        </section>
 
-          {/* Beauty Journal */}
-          <div className="bg-[#F3E8FF] border border-[#E9D5FF] rounded-2xl p-4 relative overflow-hidden min-h-[130px]">
-            <h3 className="text-[#7E22CE] font-display font-bold text-sm mb-1">Beauty Journal</h3>
-            <p className="text-[9px] text-[#581C87] mb-3 leading-snug">Expert tips & beauty guides</p>
-            <Link
-              to="/about"
-              className="inline-flex items-center gap-1 px-3 py-1.5 bg-white text-[#7E22CE] text-[10px] font-bold rounded-xl shadow-sm active:scale-95 transition-transform"
-            >
-              Read Now <ArrowRight className="w-2.5 h-2.5" />
-            </Link>
-            
-          </div>
+        {/* ════════════════════════════════════════════════════
+            CTA FOOTER
+        ════════════════════════════════════════════════════ */}
+        <section className="mt-6 mb-8 relative rounded-3xl overflow-hidden bg-rose-50 p-6 flex flex-col items-center text-center shadow-inner">
+           {/* Decorative corner flowers/blobs */}
+           <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-pink-200/50 rounded-full blur-xl" />
+           <div className="absolute -top-10 -right-10 w-32 h-32 bg-rose-200/50 rounded-full blur-xl" />
+           
+           <h2 className="text-2xl font-display font-black text-gray-900 mb-2 relative z-10">Ready to Glow?</h2>
+           <p className="text-xs text-gray-600 max-w-[250px] mb-6 font-medium relative z-10">
+             Book your appointment now and experience the magic of beauty & care at Gayatri Beauty Studio.
+           </p>
+           
+           <Link
+             to={bookLink}
+             className="relative z-10 px-6 py-3 bg-rose-500 text-white font-bold rounded-full shadow-lg hover:bg-rose-600 transition-colors flex items-center gap-2 text-sm"
+           >
+             Book Appointment Now <ArrowRight className="w-4 h-4" />
+           </Link>
+           <p className="text-[9px] text-gray-400 font-semibold mt-3 relative z-10 flex items-center gap-1"><Clock className="w-3 h-3 text-rose-400" /> Takes Less Than 30 Seconds!</p>
         </section>
 
       </main>
-
-      {/* Sticky Mobile Registration Banner */}
-      {!isAuthenticated && (
-        <div className="fixed bottom-20 left-4 right-4 md:hidden z-50">
-          <div className="bg-gradient-to-r from-rose-500 to-purple-600 rounded-2xl shadow-2xl p-4 flex items-center gap-3">
-            <div className="flex-1">
-              <p className="text-white font-bold text-sm">Join Free - Book Instantly</p>
-              <p className="text-white/80 text-xs">Skip the wait, earn rewards</p>
-            </div>
-            <Link
-              to="/register"
-              className="px-4 py-2 bg-white text-rose-600 font-bold rounded-xl text-sm shadow-lg active:scale-95 transition-transform"
-            >
-              Register Now
-            </Link>
-          </div>
-        </div>
-      )}
 
       {/* Floating AI chat */}
       <AIConsultant />

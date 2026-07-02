@@ -4,11 +4,18 @@ import { motion } from "framer-motion";
 import { authService } from "../../services";
 import { getInitials } from "../../utils";
 import { useAuthStore } from "../../store/authStore";
+import { useState } from "react";
 
 export default function Leaderboard() {
   const user = useAuthStore((s) => s.user);
-  const { data: leaderboardData, isLoading } = useQuery({ queryKey: ["LEADERBOARD"], queryFn: authService.getLeaderboard });
-  const leaderboard = leaderboardData?.data?.lifetime || [];
+  const [activeTab, setActiveTab] = useState("monthly");
+  
+  const { data: leaderboardData, isLoading: isLoadingLifetime } = useQuery({ queryKey: ["LEADERBOARD"], queryFn: authService.getLeaderboard });
+  const { data: monthlyData, isLoading: isLoadingMonthly } = useQuery({ queryKey: ["MONTHLY_LEADERBOARD"], queryFn: authService.getMonthlyLeaderboard });
+  
+  const isLoading = activeTab === "monthly" ? isLoadingMonthly : isLoadingLifetime;
+  const leaderboard = activeTab === "monthly" ? (monthlyData?.data || []) : (leaderboardData?.data?.lifetime || []);
+  const pointsKey = activeTab === "monthly" ? "monthlyGlowPoints" : "lifetimeGlowPoints";
 
   const top3 = leaderboard.slice(0, 3);
   const others = leaderboard.slice(3);
@@ -24,9 +31,27 @@ export default function Leaderboard() {
         <h1 className="font-display text-4xl lg:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-yellow-600 to-amber-700">
           Hall of Fame
         </h1>
-        <p className="text-[var(--color-text-muted)] text-lg max-w-xl mx-auto">
+        <p className="text-[var(--color-text-muted)] text-lg max-w-xl mx-auto mb-6">
           The most glamorous beauties of our salon! Earn points by booking services and climb to the top.
         </p>
+        
+        {/* Tabs */}
+        <div className="flex justify-center mb-8">
+          <div className="bg-[var(--color-surface-2)] p-1 rounded-xl inline-flex shadow-sm border border-[var(--color-border)]">
+            <button 
+              onClick={() => setActiveTab("monthly")}
+              className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${activeTab === "monthly" ? "bg-[var(--color-rose-500)] text-white shadow-md" : "text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"}`}
+            >
+              This Month
+            </button>
+            <button 
+              onClick={() => setActiveTab("lifetime")}
+              className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${activeTab === "lifetime" ? "bg-amber-500 text-white shadow-md" : "text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"}`}
+            >
+              Lifetime Glory
+            </button>
+          </div>
+        </div>
       </div>
 
       {isLoading ? (
@@ -56,7 +81,7 @@ export default function Leaderboard() {
                   <h3 className="font-display text-xl font-bold mt-4">{top3[1].firstName} {top3[1].lastName}</h3>
                   <p className="text-sm text-gray-500 mb-4">{top3[1].membership} Member</p>
                   <div className="w-full pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <p className="font-display text-2xl font-bold text-gray-600 dark:text-gray-300">{top3[1].lifetimeGlowPoints}</p>
+                    <p className="font-display text-2xl font-bold text-gray-600 dark:text-gray-300">{top3[1][pointsKey] || 0}</p>
                     <p className="text-xs text-gray-400 uppercase tracking-wider">Points</p>
                   </div>
                 </motion.div>
@@ -77,7 +102,7 @@ export default function Leaderboard() {
                   <h3 className="font-display text-2xl font-bold mt-5 text-yellow-700 dark:text-yellow-500">{top3[0].firstName} {top3[0].lastName}</h3>
                   <p className="text-sm text-yellow-600/70 dark:text-yellow-500/70 mb-5">{top3[0].membership} Member</p>
                   <div className="w-full pt-5 border-t border-yellow-200 dark:border-yellow-700/50">
-                    <p className="font-display text-4xl font-bold text-yellow-600 dark:text-yellow-500">{top3[0].lifetimeGlowPoints}</p>
+                    <p className="font-display text-4xl font-bold text-yellow-600 dark:text-yellow-500">{top3[0][pointsKey] || 0}</p>
                     <p className="text-sm text-yellow-600/70 dark:text-yellow-500/70 uppercase tracking-wider font-semibold">Points</p>
                   </div>
                 </motion.div>
@@ -98,7 +123,7 @@ export default function Leaderboard() {
                   <h3 className="font-display text-xl font-bold mt-4 text-amber-800 dark:text-amber-500">{top3[2].firstName} {top3[2].lastName}</h3>
                   <p className="text-sm text-amber-600/70 mb-4">{top3[2].membership} Member</p>
                   <div className="w-full pt-4 border-t border-amber-200 dark:border-amber-900/50">
-                    <p className="font-display text-2xl font-bold text-amber-700 dark:text-amber-500">{top3[2].lifetimeGlowPoints}</p>
+                    <p className="font-display text-2xl font-bold text-amber-700 dark:text-amber-500">{top3[2][pointsKey] || 0}</p>
                     <p className="text-xs text-amber-600/70 uppercase tracking-wider">Points</p>
                   </div>
                 </motion.div>
@@ -144,7 +169,7 @@ export default function Leaderboard() {
                         </div>
 
                         <div className="col-span-4 text-right">
-                          <p className="font-display font-bold text-lg text-[var(--color-text-primary)]">{customer.lifetimeGlowPoints}</p>
+                          <p className="font-display font-bold text-lg text-[var(--color-text-primary)]">{customer[pointsKey] || 0}</p>
                         </div>
                       </motion.div>
                     );
@@ -183,8 +208,8 @@ export default function Leaderboard() {
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-[var(--color-text-muted)]">Total Points</span>
-                      <span className="font-display font-bold text-gradient-rose">{user.lifetimeGlowPoints}</span>
+                      <span className="text-sm text-[var(--color-text-muted)]">{activeTab === "monthly" ? "Monthly" : "Total"} Points</span>
+                      <span className="font-display font-bold text-gradient-rose">{user[pointsKey] || 0}</span>
                     </div>
                   </div>
 
@@ -199,7 +224,7 @@ export default function Leaderboard() {
                         </div>
                       );
                     } else if (myRankIndex > 0) {
-                      const pointsDiff = leaderboard[myRankIndex - 1].lifetimeGlowPoints - user.lifetimeGlowPoints;
+                      const pointsDiff = (leaderboard[myRankIndex - 1][pointsKey] || 0) - (user[pointsKey] || 0);
                       return (
                         <div className="bg-[var(--color-surface-3)] rounded-2xl p-4">
                           <div className="flex items-center gap-2 text-[var(--color-text-primary)] mb-2">

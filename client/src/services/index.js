@@ -8,6 +8,8 @@ export const authService = {
   getMe: () => api.get("/auth/me"),
   updateMe: (data) => api.put("/auth/me", data),
   getLeaderboard: () => api.get("/auth/leaderboard"),
+  getMonthlyLeaderboard: () => api.get("/leaderboard/current"),
+  getHallOfFame: () => api.get("/leaderboard/hof"),
 };
 
 export const serviceService = {

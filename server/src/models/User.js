@@ -99,6 +99,11 @@ const userSchema = new mongoose.Schema(
             default: 0,
         },
 
+        isCurrentChampion: {
+            type: Boolean,
+            default: false,
+        },
+
         isVerified: {
             type: Boolean,
             default: false,

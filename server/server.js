@@ -22,6 +22,7 @@ const journeyRoutes = require("./src/routes/journeyRoutes");
 const glowFeedRoutes = require("./src/routes/glowFeedRoutes");
 const reviewRoutes = require("./src/routes/reviewRoutes");
 const visitorRoutes = require("./src/routes/visitorRoutes");
+const leaderboardRoutes = require("./src/routes/leaderboardRoutes");
 
 dotenv.config();
 
@@ -88,6 +89,7 @@ app.use("/api/journey", journeyRoutes);
 app.use("/api/feed", glowFeedRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/visitors", visitorRoutes);
+app.use("/api/leaderboard", leaderboardRoutes);
 
 app.get("/", (req, res) => {
     res.status(200).json({
@@ -100,7 +102,9 @@ const PORT = process.env.PORT || 5000;
 app.use(errorMiddleware);
 
 const { startScheduler } = require("./src/scripts/reminderScheduler");
+const { startMonthlyScheduler } = require("./src/scripts/monthlyResetScheduler");
 startScheduler();
+startMonthlyScheduler();
 
 app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);

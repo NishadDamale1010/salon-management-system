@@ -1,358 +1,199 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Sparkles, Calendar, ArrowRight, Bell, Gift, Trophy, Crown, ChevronLeft, ChevronRight, Clock, ShoppingBag, Package } from "lucide-react";
-import { useState, useRef, useEffect, useCallback } from "react";
+import { ChevronRight, Calendar, User, Gift, Tag, Image as ImageIcon, MessageCircle, Phone, Sparkles, ShoppingBag, Plus } from "lucide-react";
+import { useState } from "react";
 import { useAuthStore } from "../../store/authStore";
-import { useNotifications } from "../../hooks/useNotifications";
-import { appointmentService, notificationService, rewardService, authService, serviceService, inventoryService } from "../../services";
+import { authService, serviceService, inventoryService } from "../../services";
 import { QUERY_KEYS } from "../../constants/queryKeys";
-import { formatDate, getMembershipColor, cn, formatPriceOrTbd, isPriceSet } from "../../utils";
-import { StatCard } from "../../components/ui/Card";
-import { Badge } from "../../components/ui/Badge";
-import { APPOINTMENT_STATUSES } from "../../constants";
-import ProductCarousel from "../../components/products/ProductCarousel";
+import { cn } from "../../utils";
+import ChampionBanner from "../../components/Leaderboard/ChampionBanner";
 import ProductModal from "../../components/products/ProductModal";
-import DailyTipModal from "../../components/ui/DailyTipModal";
 import LaunchModal from "../../components/ui/LaunchModal";
+import DailyTipModal from "../../components/ui/DailyTipModal";
+
+const ACTION_ICONS = [
+  { id: 1, label: "Book Appointment", icon: Calendar, to: "/book", bg: "bg-rose-50", color: "text-rose-500" },
+  { id: 2, label: "My Appointments", icon: Calendar, to: "/appointments", bg: "bg-rose-50", color: "text-rose-500" },
+  { id: 3, label: "My Profile", icon: User, to: "/profile", bg: "bg-rose-50", color: "text-rose-500" },
+  { id: 4, label: "Glow Points", icon: Sparkles, to: "/rewards", bg: "bg-rose-50", color: "text-rose-500" },
+  { id: 5, label: "Refer & Earn", icon: Gift, to: "/refer", bg: "bg-rose-50", color: "text-rose-500" },
+  { id: 6, label: "Products", icon: ShoppingBag, to: "/products", bg: "bg-rose-50", color: "text-rose-500" },
+  { id: 7, label: "Offers", icon: Tag, to: "/offers", bg: "bg-rose-50", color: "text-rose-500" },
+  { id: 8, label: "Gallery", icon: ImageIcon, to: "/gallery", bg: "bg-rose-50", color: "text-rose-500" },
+  { id: 9, label: "Reviews", icon: MessageCircle, to: "/reviews", bg: "bg-rose-50", color: "text-rose-500" },
+  { id: 10, label: "Contact Us", icon: Phone, to: "/contact", bg: "bg-rose-50", color: "text-rose-500" },
+];
 
 export default function CustomerDashboard() {
   const user = useAuthStore((s) => s.user);
-  const { data: apptData } = useQuery({ queryKey: QUERY_KEYS.MY_APPOINTMENTS, queryFn: appointmentService.getMyAppointments });
-  const { data: notifData } = useQuery({ queryKey: QUERY_KEYS.NOTIFICATIONS, queryFn: notificationService.getAll });
-  const { data: rewardsData } = useQuery({ queryKey: QUERY_KEYS.REWARDS, queryFn: rewardService.getAll });
+  
+  // Queries
   const { data: leaderboardData } = useQuery({ queryKey: ["LEADERBOARD"], queryFn: authService.getLeaderboard });
   const { data: servicesData } = useQuery({ queryKey: QUERY_KEYS.SERVICES, queryFn: serviceService.getAll });
   const { data: productsData } = useQuery({ queryKey: QUERY_KEYS.PRODUCTS, queryFn: inventoryService.getProducts });
-  const { permissionStatus, requestPermission } = useNotifications();
-
-  const appointments = apptData?.data || [];
-  const notifications = notifData?.data || [];
-  const rewards = rewardsData?.data || [];
+  
   const leaderboard = leaderboardData?.data?.lifetime || [];
   const services = servicesData?.data || [];
   const products = productsData?.data || [];
-
-  const upcoming = appointments.find(a => a.status === "Confirmed" || a.status === "Pending");
-  const unreadCount = notifications.filter(n => !n.isRead).length;
-
-  // Calculate Points Away
-  let pointsAwayText = "";
-  if (leaderboard.length > 0 && user) {
-    const myRankIndex = leaderboard.findIndex(c => c._id === user._id);
-    if (myRankIndex === 0) {
-      pointsAwayText = "You are the reigning Queen! 👑 Keep glowing!";
-    } else if (myRankIndex > 0) {
-      const pointsDiff = leaderboard[myRankIndex - 1].glowPoints - user.glowPoints;
-      pointsAwayText = `You are only ${pointsDiff} Glow Points away from overtaking ${leaderboard[myRankIndex - 1].firstName}! Keep glowing, gorgeous! ✨`;
-    } else {
-      const lastOnBoard = leaderboard[leaderboard.length - 1];
-      const pointsDiff = lastOnBoard.glowPoints > user.glowPoints ? lastOnBoard.glowPoints - user.glowPoints : 10;
-      pointsAwayText = `You are ${pointsDiff} points away from entering the Leaderboard! Book a session to catch up!`;
-    }
-  }
-
-  // ───── Services Slider Logic ─────
-  const sliderRef = useRef(null);
-  const [sliderIndex, setSliderIndex] = useState(0);
-  const [selectedProduct, setSelectedProduct] = useState(null);
+  
   const activeServices = services.filter(s => s.isActive);
-  const maxIndex = Math.max(0, activeServices.length - 1);
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
-  const scrollToIndex = useCallback((idx) => {
-    const clamped = Math.max(0, Math.min(idx, maxIndex));
-    setSliderIndex(clamped);
-    if (sliderRef.current) {
-      const card = sliderRef.current.children[clamped];
-      if (card) card.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+  // Group services by category for display
+  const categoryData = activeServices.reduce((acc, svc) => {
+    if (!acc[svc.category]) {
+      acc[svc.category] = {
+        name: svc.category,
+        count: 0,
+        // Use the first available image from a service in this category, or a fallback if none exist
+        img: svc.image || svc.imageUrl || null,
+        icon: Sparkles
+      };
     }
-  }, [maxIndex]);
-
-  // Removed auto-scroll as per request, keeping only manual scroll support
-
-
-  // Touch/drag swipe support
-  const touchStart = useRef(null);
-  const handleTouchStart = (e) => { touchStart.current = e.touches[0].clientX; };
-  const handleTouchEnd = (e) => {
-    if (touchStart.current === null) return;
-    const diff = touchStart.current - e.changedTouches[0].clientX;
-    if (Math.abs(diff) > 50) {
-      scrollToIndex(diff > 0 ? sliderIndex + 1 : sliderIndex - 1);
+    acc[svc.category].count += 1;
+    // If we didn't have an image yet, but this service has one, use it
+    if (!acc[svc.category].img && (svc.image || svc.imageUrl)) {
+      acc[svc.category].img = svc.image || svc.imageUrl;
     }
-    touchStart.current = null;
-  };
+    return acc;
+  }, {});
 
-  // Service card gradient colors
-  const serviceColors = [
-    "from-rose-500/20 to-pink-500/10",
-    "from-purple-500/20 to-indigo-500/10",
-    "from-amber-500/20 to-yellow-500/10",
-    "from-emerald-500/20 to-teal-500/10",
-    "from-blue-500/20 to-cyan-500/10",
-    "from-fuchsia-500/20 to-pink-500/10",
+  // Convert the grouped data into an array. If there are no services, use some defaults to match the design.
+  const serviceCategories = Object.values(categoryData).length > 0 
+    ? Object.values(categoryData) 
+    : [
+        { name: "Hair", count: 12, img: "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&q=80&w=800", icon: Sparkles },
+        { name: "Skin", count: 15, img: "https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?auto=format&fit=crop&q=80&w=800", icon: Sparkles },
+        { name: "Makeup", count: 10, img: "https://images.unsplash.com/photo-1512496015851-a9089df53e96?auto=format&fit=crop&q=80&w=800", icon: Sparkles },
+        { name: "Nails", count: 8, img: "https://images.unsplash.com/photo-1519014816548-bf5fe059e98b?auto=format&fit=crop&q=80&w=800", icon: Sparkles }
+      ];
+
+  // For products, it already uses your actual products if they exist in the database.
+  // The placeholders are only a fallback if the database returns 0 products.
+  const dummyProducts = products.length > 0 ? products : [
+    { _id: 1, name: "Glow Serum", price: 899, image: "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&q=80&w=800" },
+    { _id: 2, name: "Hair Repair Mask", price: 750, image: "https://images.unsplash.com/photo-1556228578-0d85b1a4d571?auto=format&fit=crop&q=80&w=800" },
+    { _id: 3, name: "Sunscreen SPF 50", price: 699, image: "https://images.unsplash.com/photo-1556228720-192a6af4e865?auto=format&fit=crop&q=80&w=800" },
+    { _id: 4, name: "Face Cleanser", price: 499, image: "https://images.unsplash.com/photo-1571781926291-c477eb30c451?auto=format&fit=crop&q=80&w=800" },
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 pb-6 w-full max-w-md mx-auto overflow-x-hidden">
       <LaunchModal />
-      {/* Greeting */}
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="flex items-start justify-between flex-wrap gap-4">
-          <div>
-            <h1 className="font-display text-3xl font-bold text-[var(--color-text-primary)] flex items-center gap-2">
-              Hello, Queen {user?.firstName}! <Crown className="w-8 h-8 text-yellow-400" />
-            </h1>
-            <p className="text-[var(--color-text-muted)] mt-1">Welcome back to your royal beauty dashboard</p>
+      <DailyTipModal />
+
+      {/* Welcome Banner */}
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="relative rounded-3xl overflow-hidden bg-rose-50 h-[180px] sm:h-[200px]">
+        {/* Background Decorative Pattern / Image */}
+        <div className="absolute top-0 right-0 bottom-0 left-0">
+          <img src="/images/welcome-model.png" className="w-full h-full object-cover object-right opacity-90" alt="" onError={(e) => { e.target.onerror = null; e.target.src="https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&w=800&q=80"; }} />
+          <div className="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-transparent"></div>
+        </div>
+
+        <div className="relative z-10 p-5 flex flex-col justify-center h-full max-w-[65%]">
+          <h1 className="font-display text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-1 leading-tight">
+            Good Morning, {user?.firstName} 💖
+          </h1>
+          <p className="text-gray-600 text-xs sm:text-sm mt-1">You're looking lovely today! ✨</p>
+          
+          <div className="flex items-center gap-2 mt-4">
+            <div className="flex items-center gap-1.5 bg-white shadow-sm rounded-full px-3 py-1.5 border border-rose-100">
+              <span className="text-rose-500 text-lg leading-none">💎</span>
+              <span className="font-bold text-sm text-gray-800">{user?.glowPoints || 840}</span>
+              <span className="text-[10px] text-gray-500 font-medium ml-0.5">Glow Points</span>
+            </div>
           </div>
-          <Link 
-            to="/book" 
-            className={cn(
-              "inline-flex items-center gap-2 px-6 py-3 text-white font-medium rounded-xl transition-all hover:shadow-[var(--shadow-glow-rose)] hover:-translate-y-0.5",
-              !upcoming ? "animate-pulse ring-4 ring-[var(--color-rose-500)]/50 shadow-[var(--shadow-glow-rose)] bg-[var(--color-rose-600)]" : "bg-[var(--color-rose-500)]"
-            )}
-          >
-            <Calendar className="w-4 h-4" /> Book Appointment
+          
+          <Link to="/rewards" className="mt-2 flex items-center gap-1 text-[10px] sm:text-xs text-rose-500 font-medium px-3 py-1 rounded-full border border-rose-200 w-fit hover:bg-rose-50 bg-white/50 backdrop-blur-sm">
+            View Progress <ChevronRight className="w-3 h-3" />
           </Link>
         </div>
       </motion.div>
 
-      {permissionStatus === "default" && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl bg-blue-50 border border-blue-200 p-5 flex items-center justify-between flex-wrap gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-              <Bell className="w-5 h-5 text-blue-500" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-blue-900">Never Miss an Update!</h3>
-              <p className="text-sm text-blue-700 mt-0.5">Enable push notifications for appointment reminders and updates.</p>
-            </div>
-          </div>
-          <button onClick={requestPermission} className="px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-xl transition-all shadow-sm">
-            Enable Notifications
-          </button>
-        </motion.div>
-      )}
+      {/* Champion Banner */}
+      <ChampionBanner user={user} leaderboard={leaderboard} />
 
-      {permissionStatus === "denied" && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl bg-red-50 border border-red-200 p-4 flex items-center gap-3">
-          <Bell className="w-5 h-5 text-red-500 flex-shrink-0" />
-          <p className="text-sm text-red-700">Push notifications are blocked by your browser. Please enable them in your site settings to receive updates.</p>
-        </motion.div>
-      )}
-
-      <DailyTipModal />
-
-      {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={Sparkles} label="Glow Points" value={user?.glowPoints || 0} sub="Current Balance" color="rose" />
-        <StatCard icon={Calendar} label="Total Appointments" value={appointments.length} sub="All time" color="blue" />
-        <StatCard icon={Bell} label="Notifications" value={unreadCount} sub="Unread" color="purple" />
-        <Link to="/rewards" className="block">
-          <StatCard icon={Gift} label="Rewards Available" value={rewards.length} sub="Click to redeem" color="gold" className="h-full hover:border-[var(--color-rose-300)]" />
-        </Link>
-      </div>
-
-      {/* Membership Card */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
-        className="rounded-2xl overflow-hidden relative p-6 border border-[var(--color-border)]"
-        style={{ background: `linear-gradient(135deg, var(--color-surface-card) 0%, rgba(${user?.membership === 'Gold' ? '251,191,36' : user?.membership === 'Platinum' ? '229,228,226' : user?.membership === 'Silver' ? '168,169,173' : '205,127,50'},0.08) 100%)` }}
-      >
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <p className="text-sm text-[var(--color-text-muted)]">Membership Status</p>
-            <h2 className="font-display text-3xl font-bold mt-1" style={{ color: getMembershipColor(user?.membership) }}>
-              {user?.membership} Member
-            </h2>
-            <p className="text-sm text-[var(--color-text-muted)] mt-1">
-              Lifetime Points: <span className="text-[var(--color-text-primary)] font-semibold">{user?.lifetimeGlowPoints || 0}</span>
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="text-xs text-[var(--color-text-muted)]">Current Glow Points</p>
-            <p className="font-display text-5xl font-bold text-gradient-rose">{user?.glowPoints || 0}</p>
-          </div>
+      {/* Quick Action Grid */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+        <div className="grid grid-cols-5 gap-y-6 gap-x-2">
+          {ACTION_ICONS.map((action) => (
+            <Link key={action.id} to={action.to} className="flex flex-col items-center gap-2 group">
+              <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-105 border border-rose-100", action.bg)}>
+                <action.icon className={cn("w-5 h-5", action.color)} strokeWidth={1.5} />
+              </div>
+              <span className="text-[10px] text-center font-medium text-gray-700 leading-tight">
+                {action.label}
+              </span>
+            </Link>
+          ))}
         </div>
       </motion.div>
 
-      {/* Points Away Widget */}
-      {pointsAwayText && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-          className="rounded-2xl bg-[var(--color-rose-500)]/5 border border-[var(--color-rose-500)]/30 p-5 flex items-center gap-4"
-        >
-          <div className="w-12 h-12 rounded-full bg-[var(--color-rose-500)]/20 flex items-center justify-center flex-shrink-0">
-            <Trophy className="w-6 h-6 text-[var(--color-rose-500)]" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-[var(--color-text-primary)]">Glow Points Goal</h3>
-            <p className="text-sm text-[var(--color-text-muted)] mt-0.5">{pointsAwayText}</p>
-          </div>
-        </motion.div>
-      )}
+      {/* Our Services Section */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mt-8 pt-4">
+        <div className="flex items-center justify-between mb-4 px-1">
+          <h2 className="font-display text-lg font-bold text-gray-900">Our Services</h2>
+          <Link to="/book" className="flex items-center text-xs font-semibold text-rose-500 hover:text-rose-600">
+            View All <ChevronRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
 
-      {/* ═══════════════ Our Services Slider ═══════════════ */}
-      {activeServices.length > 0 && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-display text-xl font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-[var(--color-rose-400)]" /> Our Services
-            </h2>
-            <div className="flex items-center gap-2">
-              <button onClick={() => scrollToIndex(sliderIndex - 1)} disabled={sliderIndex === 0}
-                className="w-8 h-8 rounded-full bg-[var(--color-surface-card)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:border-[var(--color-rose-500)]/30 transition-all disabled:opacity-30 disabled:pointer-events-none">
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button onClick={() => scrollToIndex(sliderIndex + 1)} disabled={sliderIndex >= maxIndex}
-                className="w-8 h-8 rounded-full bg-[var(--color-surface-card)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:border-[var(--color-rose-500)]/30 transition-all disabled:opacity-30 disabled:pointer-events-none">
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          <div ref={sliderRef} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}
-            className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-2"
-            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-          >
-            {activeServices.map((svc, i) => (
-              <motion.div key={svc._id}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.05 }}
-                className={`snap-center flex-shrink-0 w-[260px] sm:w-[280px] rounded-2xl bg-gradient-to-br ${serviceColors[i % serviceColors.length]} border border-[var(--color-border)] p-5 flex flex-col justify-between hover:border-[var(--color-rose-500)]/40 transition-all hover:-translate-y-1 hover:shadow-lg`}
-              >
-                {svc.image && (
-                  <img src={svc.image} alt={svc.name} className="w-full h-32 object-cover rounded-xl mb-3" />
-                )}
-                <div className="flex-1">
-                  <Badge variant="ghost" className="mb-2 text-[10px]">{svc.category}</Badge>
-                  <h3 className="font-display font-bold text-[var(--color-text-primary)] text-base">{svc.name}</h3>
-                  {svc.description && (
-                    <p className="text-xs text-[var(--color-text-muted)] mt-1 line-clamp-2">{svc.description}</p>
-                  )}
-                  <div className="flex items-center gap-3 mt-3 text-xs text-[var(--color-text-muted)]">
-                    <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {svc.duration} min</span>
-                  </div>
+        <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4 px-1 -mx-4 sm:mx-0 sm:px-0 scroll-pl-4" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+          {/* Add a tiny spacer for initial scroll padding on mobile */}
+          <div className="w-1 shrink-0 sm:hidden"></div>
+          {serviceCategories.map((cat, i) => (
+            <Link key={i} to={`/book?category=${cat.name}`} className="snap-center flex-shrink-0 w-32 relative block">
+              <div className="w-full h-36 rounded-2xl overflow-hidden relative shadow-sm border border-gray-100">
+                <img src={cat.img} alt={cat.name} className="w-full h-full object-cover" />
+                <div className="absolute bottom-2 left-2 w-7 h-7 bg-rose-500 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+                  <cat.icon className="w-3.5 h-3.5 text-white" />
                 </div>
-                <Link to={`/book?service=${svc._id}`}
-                  className="mt-4 inline-flex items-center justify-center gap-1.5 w-full py-2.5 bg-[var(--color-rose-500)] hover:bg-[var(--color-rose-600)] text-white font-semibold rounded-xl text-xs transition-all hover:shadow-md"
-                >
-                  <Calendar className="w-3.5 h-3.5" /> Book Now
-                </Link>
-              </motion.div>
-            ))}
-          </div>
+              </div>
+              <h3 className="font-bold text-gray-900 text-sm mt-2">{cat.name}</h3>
+              <p className="text-xs text-gray-500 font-medium">{cat.count} Services</p>
+            </Link>
+          ))}
+          <div className="w-1 shrink-0 sm:hidden"></div>
+        </div>
+      </motion.div>
 
-          {/* Dot indicators */}
-          {activeServices.length > 1 && (
-            <div className="flex justify-center gap-1.5 mt-3">
-              {activeServices.map((_, i) => (
-                <button key={i} onClick={() => scrollToIndex(i)}
-                  className={`w-2 h-2 rounded-full transition-all ${i === sliderIndex ? "bg-[var(--color-rose-500)] w-5" : "bg-[var(--color-text-muted)]/30 hover:bg-[var(--color-text-muted)]/60"}`}
+      {/* Featured Products Section */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="mt-6">
+        <div className="flex items-center justify-between mb-4 px-1">
+          <h2 className="font-display text-lg font-bold text-gray-900">Featured Products</h2>
+          <Link to="/products" className="flex items-center text-xs font-semibold text-rose-500 hover:text-rose-600">
+            View All <ChevronRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4 px-1 -mx-4 sm:mx-0 sm:px-0 scroll-pl-4" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+          <div className="w-1 shrink-0 sm:hidden"></div>
+          {dummyProducts.map((prod, i) => (
+            <div key={i} className="snap-center flex-shrink-0 w-32 bg-rose-50/50 rounded-2xl p-3 border border-rose-100 relative group cursor-pointer" onClick={() => setSelectedProduct(prod)}>
+              <div className="w-full h-24 mb-3 rounded-xl overflow-hidden flex items-center justify-center mix-blend-multiply bg-white">
+                <img 
+                  src={prod.image || prod.imageUrl || "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&q=80&w=800"} 
+                  alt={prod.name} 
+                  className="w-full h-full object-cover" 
+                  onError={(e) => { e.target.onerror = null; e.target.src="https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&q=80&w=800"; }}
                 />
-              ))}
+              </div>
+              <h3 className="font-bold text-gray-900 text-[11px] leading-tight line-clamp-2 pr-6">{prod.name}</h3>
+              
+              <button 
+                className="absolute bottom-3 right-3 w-7 h-7 bg-rose-500 hover:bg-rose-600 text-white rounded-full flex items-center justify-center shadow-sm transition-transform active:scale-95"
+                onClick={(e) => { e.stopPropagation(); /* Add to cart */ }}
+              >
+                <Plus className="w-4 h-4" strokeWidth={3} />
+              </button>
             </div>
-          )}
-        </motion.div>
-      )}
-
-      {/* ═══════════════ Products We Offer ═══════════════ */}
-      {products.length > 0 && (
-        <>
-          <ProductCarousel 
-            products={products} 
-            onViewDetails={setSelectedProduct} 
-            title="Products We Use" 
-            icon={Package} 
-          />
-          <ProductModal 
-            isOpen={!!selectedProduct} 
-            product={selectedProduct} 
-            onClose={() => setSelectedProduct(null)} 
-          />
-        </>
-      )}
-
-      {/* Upcoming Appointment */}
-      {upcoming && (
-        <div>
-          <h2 className="font-display text-xl font-semibold text-[var(--color-text-primary)] mb-4">Upcoming Appointment</h2>
-          <div className="rounded-2xl bg-[var(--color-surface-card)] border border-[var(--color-border)] p-5">
-            <div className="flex items-start justify-between flex-wrap gap-3">
-              <div>
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {upcoming.services?.map((s) => (
-                    <Badge key={s.serviceName} variant="ghost">{s.serviceName}</Badge>
-                  ))}
-                </div>
-                <p className="text-[var(--color-text-muted)] text-sm">{formatDate(upcoming.appointmentDate)} at {upcoming.appointmentTime}</p>
-                {isPriceSet(upcoming.totalAmount) && (
-                  <p className="text-[var(--color-rose-400)] font-semibold mt-1">{formatPriceOrTbd(upcoming.totalAmount)}</p>
-                )}
-              </div>
-              <div className="flex items-center gap-3">
-                <Badge variant={upcoming.status === "Confirmed" ? "success" : "warning"}>{upcoming.status}</Badge>
-                <Link to={`/appointments/${upcoming._id}`} className="text-sm text-[var(--color-rose-400)] hover:underline flex items-center gap-1">
-                  View <ArrowRight className="w-3 h-3" />
-                </Link>
-              </div>
-            </div>
-          </div>
+          ))}
+          <div className="w-1 shrink-0 sm:hidden"></div>
         </div>
-      )}
+      </motion.div>
 
-      {/* Recent Notifications */}
-      {notifications.length > 0 && (
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-display text-xl font-semibold text-[var(--color-text-primary)]">Recent Notifications</h2>
-            <Link to="/notifications" className="text-sm text-[var(--color-rose-400)] hover:underline">View all</Link>
-          </div>
-          <div className="space-y-2">
-            {notifications.slice(0, 3).map((n) => (
-              <div key={n._id} className={`flex gap-3 p-4 rounded-xl border transition-all ${n.isRead ? "bg-[var(--color-surface-card)] border-[var(--color-border)]" : "bg-[var(--color-rose-500)]/5 border-[var(--color-rose-500)]/20"}`}>
-                <Bell className="w-4 h-4 text-[var(--color-rose-400)] flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-[var(--color-text-primary)]">{n.title}</p>
-                  <p className="text-xs text-[var(--color-text-muted)] mt-0.5">{n.message}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Recent Appointments */}
-      {appointments.length > 0 && (
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-display text-xl font-semibold text-[var(--color-text-primary)]">Recent Appointments</h2>
-            <Link to="/appointments" className="text-sm text-[var(--color-rose-400)] hover:underline">View all</Link>
-          </div>
-          <div className="space-y-3">
-            {appointments.slice(0, 3).map((a) => {
-              const s = APPOINTMENT_STATUSES[a.status] || APPOINTMENT_STATUSES.Pending;
-              return (
-                <Link key={a._id} to={`/appointments/${a._id}`}
-                  className="flex items-center justify-between p-4 rounded-xl bg-[var(--color-surface-card)] border border-[var(--color-border)] hover:border-[var(--color-rose-500)]/30 transition-all"
-                >
-                  <div>
-                    <p className="text-sm font-medium text-[var(--color-text-primary)]">{a.services?.map(s => s.serviceName).join(", ")}</p>
-                    <p className="text-xs text-[var(--color-text-muted)]">{formatDate(a.appointmentDate)}</p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {isPriceSet(a.totalAmount) && (
-                      <span className="text-sm font-semibold text-[var(--color-rose-400)]">{formatPriceOrTbd(a.totalAmount)}</span>
-                    )}
-                    <Badge variant={a.status === "Completed" ? "info" : a.status === "Confirmed" ? "success" : a.status === "Cancelled" ? "error" : "warning"}>
-                      {a.status}
-                    </Badge>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      <ProductModal isOpen={!!selectedProduct} product={selectedProduct} onClose={() => setSelectedProduct(null)} />
     </div>
   );
 }
