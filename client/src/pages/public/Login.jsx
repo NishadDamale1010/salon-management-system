@@ -106,12 +106,12 @@ export default function Login() {
         </div>
 
         {/* Right Side: Light Glass Form */}
-        <div className="w-full max-w-md bg-white/60 backdrop-blur-3xl border border-white/60 rounded-[2.5rem] p-8 md:p-10 shadow-[0_20px_60px_rgba(244,63,94,0.1),inset_0_0_20px_rgba(255,255,255,0.8)] relative overflow-hidden group">
+        <div className="w-full max-w-md bg-white/60 backdrop-blur-3xl border border-white/60 rounded-3xl md:rounded-[2.5rem] p-6 sm:p-8 md:p-10 shadow-[0_20px_60px_rgba(244,63,94,0.1),inset_0_0_20px_rgba(255,255,255,0.8)] relative overflow-hidden group">
           {/* Subtle hover glow on card */}
           <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-rose-500)]/0 to-[var(--color-rose-500)]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
           
           <div className="relative z-10">
-            <div className="mb-8 text-center">
+            <div className="mb-6 sm:mb-8 text-center">
               <h2 className="font-display text-3xl font-bold text-gray-900 mb-2">Welcome Back</h2>
               <p className="text-gray-500 text-sm">Sign in to your account</p>
             </div>
