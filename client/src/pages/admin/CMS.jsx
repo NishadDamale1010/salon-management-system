@@ -271,17 +271,19 @@ export default function CMS() {
   };
 
   return (
-    <div className="flex gap-6 h-full">
+    <div className="flex flex-col md:flex-row gap-6 h-full">
       {/* Sidebar */}
-      <div className="w-52 flex-shrink-0 space-y-1">
+      <div className="md:w-52 flex-shrink-0">
         <h1 className="font-display text-lg font-bold text-[var(--color-text-primary)] mb-4">CMS</h1>
+        <div className="flex md:flex-col gap-1 overflow-x-auto pb-2 md:pb-0">
         {SECTIONS.map(s => (
           <button key={s.id} onClick={() => setSection(s.id)}
-            className={cn("flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl text-sm transition-all", section === s.id ? "bg-[var(--color-rose-600)] text-white border border-[var(--color-rose-500)]/30" : "text-[var(--color-text-secondary)] hover:bg-[var(--color-rose-500)]/5 hover:text-[var(--color-text-primary)]")}
+            className={cn("flex items-center gap-2.5 whitespace-nowrap w-full px-3 py-2.5 rounded-xl text-sm transition-all", section === s.id ? "bg-[var(--color-rose-600)] text-white border border-[var(--color-rose-500)]/30" : "text-[var(--color-text-secondary)] hover:bg-[var(--color-rose-500)]/5 hover:text-[var(--color-text-primary)]")}
           >
             <s.icon className="w-4 h-4 flex-shrink-0" />{s.label}
           </button>
         ))}
+        </div>
       </div>
 
       {/* Content */}

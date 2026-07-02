@@ -119,7 +119,7 @@ export default function Inventory() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div><h1 className="font-display text-2xl font-bold text-[var(--color-text-primary)]">Inventory</h1><p className="text-[var(--color-text-muted)] text-sm">{products.length} products</p></div>
         <div className="flex items-center gap-3">
           <button onClick={() => setBulkModal(true)} className="flex items-center gap-2 px-5 py-2.5 bg-[var(--color-surface-card)] border border-[var(--color-rose-300)] text-[var(--color-rose-600)] text-sm font-bold rounded-xl transition-all hover:bg-[var(--color-rose-50)]">

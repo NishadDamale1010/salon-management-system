@@ -246,7 +246,7 @@ function StatsSection() {
               <div className="w-16 h-16 rounded-3xl bg-[var(--color-surface-card)] border border-[var(--color-border)] shadow-lg flex items-center justify-center mx-auto mb-4 group-hover:-translate-y-2 group-hover:border-[var(--color-rose-400)] transition-all duration-300 group-hover:shadow-[0_0_20px_rgba(244,63,94,0.2)]">
                 <promise.icon className="w-8 h-8 text-[var(--color-rose-500)] group-hover:scale-110 transition-transform" />
               </div>
-              <p className="font-display text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-text-primary)] to-[var(--color-text-secondary)]">
+              <p className="font-display text-xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-text-primary)] to-[var(--color-text-secondary)]">
                 {promise.value}
               </p>
               <p className="text-sm font-semibold text-[var(--color-text-muted)] mt-2 uppercase tracking-widest">{promise.label}</p>
@@ -822,7 +822,7 @@ function CTASection({ bookLink }) {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.2 }}
-          className="font-display text-5xl md:text-7xl font-black text-[var(--color-text-primary)] mb-6 leading-tight drop-shadow-sm"
+          className="font-display text-3xl sm:text-5xl md:text-7xl font-black text-[var(--color-text-primary)] mb-6 leading-tight drop-shadow-sm"
         >
           Ready to experience the <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-rose-500)] to-[var(--color-rose-400)]">Magic?</span>
         </motion.h2>
@@ -845,7 +845,7 @@ function CTASection({ bookLink }) {
         >
           <Link
             to={bookLink}
-            className="group relative inline-flex items-center justify-center gap-3 px-12 py-6 btn-primary font-black rounded-full text-xl transition-all hover:shadow-[0_0_40px_rgba(255,105,180,0.4)] hover:scale-105 overflow-hidden"
+            className="group relative inline-flex items-center justify-center gap-3 px-8 py-4 md:px-12 md:py-6 btn-primary font-black rounded-full text-lg md:text-xl transition-all hover:shadow-[0_0_40px_rgba(255,105,180,0.4)] hover:scale-105 overflow-hidden"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-[var(--color-rose-400)] to-[var(--color-rose-600)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <span className="relative z-10 group-hover:text-white transition-colors duration-500">Book Appointment</span>

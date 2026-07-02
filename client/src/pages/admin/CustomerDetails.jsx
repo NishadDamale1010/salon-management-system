@@ -75,7 +75,7 @@ export default function CustomerDetails() {
         <h3 className="font-semibold text-[var(--color-text-primary)] mb-4 flex items-center gap-2"><Calendar className="w-4 h-4 text-[var(--color-rose-400)]" /> Appointment History</h3>
         <div className="space-y-2">
           {appointments.slice(0, 8).map(a => (
-            <div key={a._id} className="flex items-center justify-between px-4 py-3 rounded-xl bg-[var(--color-surface-card)] border border-[var(--color-border)]">
+            <div key={a._id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-4 py-3 rounded-xl bg-[var(--color-surface-card)] border border-[var(--color-border)]">
               <div>
                 <p className="text-sm text-[var(--color-text-primary)]">{a.services?.map(s => s.serviceName).join(" + ")}</p>
                 <p className="text-xs text-[var(--color-text-muted)]">{formatDate(a.appointmentDate)} · {a.appointmentTime}</p>

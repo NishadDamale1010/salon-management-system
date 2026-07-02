@@ -29,10 +29,10 @@ export default function Rewards() {
       </div>
 
       {/* Points Banner */}
-      <div className="rounded-2xl bg-gradient-to-r from-[var(--color-rose-900)]/50 to-purple-900/30 border border-[var(--color-rose-500)]/20 p-5 flex items-center justify-between">
+      <div className="rounded-2xl bg-gradient-to-r from-[var(--color-rose-900)]/50 to-purple-900/30 border border-[var(--color-rose-500)]/20 p-4 sm:p-5 flex items-center justify-between">
         <div>
           <p className="text-sm text-[var(--color-text-muted)]">Your Glow Points</p>
-          <p className="font-display text-4xl font-bold text-gradient-rose">{user?.glowPoints || 0}</p>
+          <p className="font-display text-3xl sm:text-4xl font-bold text-gradient-rose">{user?.glowPoints || 0}</p>
         </div>
         <Sparkles className="w-12 h-12 text-[var(--color-rose-500)]/30" />
       </div>

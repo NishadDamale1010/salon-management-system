@@ -298,15 +298,15 @@ export default function GlowFeedHome() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 max-w-7xl mx-auto px-2 pb-16">
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 max-w-7xl mx-auto px-1 sm:px-2 pb-16">
       
       {/* ── Main Community Feed (Left 3 Columns) ── */}
       <div className="lg:col-span-3 space-y-6">
         
         {/* GlowFeed Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-[var(--color-rose-50)] to-white border border-[var(--color-border)] p-6 rounded-2xl shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-gradient-to-r from-[var(--color-rose-50)] to-white border border-[var(--color-border)] p-4 sm:p-6 rounded-2xl shadow-sm">
           <div>
-            <h1 className="font-display text-3xl font-bold text-[var(--color-rose-600)] flex items-center gap-2">
+            <h1 className="font-display text-2xl sm:text-3xl font-bold text-[var(--color-rose-600)] flex items-center gap-2">
               GlowFeed <Sparkles className="w-6 h-6 text-[var(--color-rose-400)] animate-pulse" />
             </h1>
             <p className="text-[var(--color-text-muted)] text-sm mt-1">Your beauty. Your style. Your community.</p>
@@ -506,7 +506,7 @@ export default function GlowFeedHome() {
       </div>
 
       {/* ── Dynamic Right Sidebar (1 Column) ── */}
-      <div className="space-y-6">
+      <div className="hidden lg:block space-y-6">
         
         {/* Trending Now */}
         <div className="bg-white border border-[var(--color-border)] rounded-2xl p-5 shadow-sm space-y-4">

@@ -16,7 +16,7 @@ export default function Contact() {
     <div className="min-h-screen bg-[var(--color-surface)] pt-8 pb-20">
       <div className="max-w-5xl mx-auto px-4">
         <div className="text-center mb-12">
-          <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="font-display text-5xl font-bold text-[var(--color-text-primary)] mb-4">Contact <span className="text-gradient-rose">Us</span></motion.h1>
+          <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="font-display text-3xl md:text-5xl font-bold text-[var(--color-text-primary)] mb-4">Contact <span className="text-gradient-rose">Us</span></motion.h1>
           <p className="text-[var(--color-text-muted)]">We'd love to hear from you</p>
         </div>
         <div className="max-w-2xl mx-auto space-y-5">

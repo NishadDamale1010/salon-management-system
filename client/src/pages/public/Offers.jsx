@@ -10,7 +10,7 @@ export default function Offers() {
     <div className="min-h-screen bg-[var(--color-surface)] pt-8 pb-20">
       <div className="max-w-5xl mx-auto px-4">
         <div className="text-center mb-12">
-          <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="font-display text-5xl font-bold text-[var(--color-text-primary)] mb-4">Special <span className="text-gradient-gold">Offers</span></motion.h1>
+          <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="font-display text-3xl md:text-5xl font-bold text-[var(--color-text-primary)] mb-4">Special <span className="text-gradient-gold">Offers</span></motion.h1>
           <p className="text-[var(--color-text-muted)]">Limited-time deals you don't want to miss</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">

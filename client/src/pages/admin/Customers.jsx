@@ -42,7 +42,7 @@ export default function Customers() {
 
       {/* Table */}
       {isLoading ? <SkeletonTable rows={6} /> : (
-        <div className="rounded-2xl overflow-hidden border border-[var(--color-border)]">
+        <div className="rounded-2xl overflow-hidden border border-[var(--color-border)] overflow-x-auto">
           <table className="w-full">
             <thead className="bg-[var(--color-surface-2)]">
               <tr>{["Customer", "Email", "Phone", "Points", "Membership", "Joined", ""].map(h => (

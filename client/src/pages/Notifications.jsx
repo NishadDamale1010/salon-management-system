@@ -39,7 +39,7 @@ const Notifications = () => {
                         >
                             <ArrowLeft className="w-6 h-6" />
                         </button>
-                        <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+                        <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
                             Notifications
                         </h1>
                     </div>
@@ -48,10 +48,10 @@ const Notifications = () => {
                         {unreadCount > 0 && (
                             <button 
                                 onClick={markAllAsRead}
-                                className="hidden md:flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-400 bg-blue-500/10 rounded-full hover:bg-blue-500/20 transition-all border border-blue-500/20"
+                                className="flex items-center gap-2 px-2.5 md:px-4 py-2 text-sm font-medium text-blue-400 bg-blue-500/10 rounded-full hover:bg-blue-500/20 transition-all border border-blue-500/20"
                             >
                                 <CheckAll className="w-4 h-4" />
-                                Mark all as read
+                                <span className="hidden md:inline">Mark all as read</span>
                             </button>
                         )}
                         {/* Settings Button could link to notification preferences */}

@@ -28,10 +28,10 @@ export default function Leaderboard() {
         <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-yellow-400 to-amber-600 shadow-[var(--shadow-glow-rose)] mb-4 animate-float">
           <Trophy className="w-10 h-10 text-white" />
         </div>
-        <h1 className="font-display text-4xl lg:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-yellow-600 to-amber-700">
+        <h1 className="font-display text-2xl sm:text-4xl lg:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-yellow-600 to-amber-700">
           Hall of Fame
         </h1>
-        <p className="text-[var(--color-text-muted)] text-lg max-w-xl mx-auto mb-6">
+        <p className="text-[var(--color-text-muted)] text-sm sm:text-lg max-w-xl mx-auto mb-6">
           The most glamorous beauties of our salon! Earn points by booking services and climb to the top.
         </p>
         
@@ -91,7 +91,7 @@ export default function Leaderboard() {
               {top3[0] && (
                 <motion.div 
                   initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-                  className="order-1 md:order-2 relative bg-gradient-to-b from-yellow-50 to-white dark:from-yellow-900/30 dark:to-[var(--color-surface-card)] rounded-3xl p-8 border-2 border-yellow-400 flex flex-col items-center text-center shadow-[0_0_40px_-10px_rgba(250,204,21,0.5)] z-10 hover:shadow-[0_0_50px_-5px_rgba(250,204,21,0.6)] hover:-translate-y-2 transition-all"
+                  className="order-1 md:order-2 relative bg-gradient-to-b from-yellow-50 to-white dark:from-yellow-900/30 dark:to-[var(--color-surface-card)] rounded-3xl p-5 sm:p-8 border-2 border-yellow-400 flex flex-col items-center text-center shadow-[0_0_40px_-10px_rgba(250,204,21,0.5)] z-10 hover:shadow-[0_0_50px_-5px_rgba(250,204,21,0.6)] hover:-translate-y-2 transition-all"
                 >
                   <div className="absolute -top-8 w-16 h-16 rounded-full bg-gradient-to-br from-yellow-300 to-yellow-500 text-white flex items-center justify-center font-bold text-3xl shadow-lg border-4 border-white dark:border-[var(--color-surface)]">
                     <Crown className="w-8 h-8" />
@@ -132,7 +132,7 @@ export default function Leaderboard() {
 
             {/* List / Table for Rank 4+ */}
             {others.length > 0 && (
-              <div className="bg-[var(--color-surface-card)] rounded-3xl border border-[var(--color-border)] overflow-hidden">
+              <div className="bg-[var(--color-surface-card)] rounded-3xl border border-[var(--color-border)] overflow-x-auto">
                 <div className="grid grid-cols-12 gap-4 p-4 sm:px-8 border-b border-[var(--color-border)] bg-[var(--color-surface-2)] text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">
                   <div className="col-span-2 text-center">Rank</div>
                   <div className="col-span-6">Beauty</div>

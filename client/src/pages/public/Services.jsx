@@ -18,7 +18,7 @@ export default function Services() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-12">
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-[var(--color-rose-400)] text-sm font-semibold tracking-widest uppercase mb-3">What We Offer</motion.p>
-          <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="font-display text-5xl font-bold text-[var(--color-text-primary)] mb-4">Our <span className="text-gradient-rose">Services</span></motion.h1>
+          <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="font-display text-3xl md:text-5xl font-bold text-[var(--color-text-primary)] mb-4">Our <span className="text-gradient-rose">Services</span></motion.h1>
           <p className="text-[var(--color-text-muted)] max-w-xl mx-auto">Premium beauty treatments crafted to bring out your best self</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">

@@ -48,7 +48,7 @@ export default function Visitors() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl font-bold text-[var(--color-text-primary)]">Anonymous Visitors</h1>
+          <h1 className="font-display text-xl md:text-3xl font-bold text-[var(--color-text-primary)]">Anonymous Visitors</h1>
           <p className="text-[var(--color-text-muted)] text-sm mt-1">Track anonymous visitor behavior and conversion</p>
         </div>
         <div className="flex gap-2">
@@ -185,7 +185,7 @@ export default function Visitors() {
       {/* Registration Funnel */}
       <div className="rounded-2xl bg-[var(--color-surface-card)] border border-[var(--color-border)] p-5">
         <h2 className="font-semibold text-[var(--color-text-primary)] mb-4">Registration Funnel</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+        <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4">
           {[
             { label: "Website Visit", value: funnel.websiteVisit, icon: Eye },
             { label: "Viewed Services", value: funnel.viewedServices, icon: MousePointer },

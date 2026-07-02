@@ -46,7 +46,7 @@ export default function MyAppointments() {
           )}
           {appointments.map((a, i) => (
             <motion.div key={a._id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
-              <Link to={`/appointments/${a._id}`} className="flex items-center justify-between p-5 rounded-2xl bg-[var(--color-surface-card)] border border-[var(--color-border)] hover:border-[var(--color-rose-500)]/30 transition-all group">
+              <Link to={`/appointments/${a._id}`} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 gap-3 rounded-2xl bg-[var(--color-surface-card)] border border-[var(--color-border)] hover:border-[var(--color-rose-500)]/30 transition-all group">
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 rounded-xl bg-[var(--color-rose-500)]/10 flex items-center justify-center flex-shrink-0">
                     <Calendar className="w-5 h-5 text-[var(--color-rose-400)]" />
@@ -60,7 +60,7 @@ export default function MyAppointments() {
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
                   {isPriceSet(a.totalAmount) && (
                     <span className="font-semibold text-[var(--color-rose-400)]">{formatPriceOrTbd(a.totalAmount)}</span>
                   )}

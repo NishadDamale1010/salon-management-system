@@ -21,7 +21,7 @@ export default function AdminLeaderboard() {
           <button key={t} onClick={() => setTab(t)} className={`px-6 py-2 rounded-lg text-sm font-medium capitalize transition-all ${tab === t ? "bg-[var(--color-surface-card)] text-[var(--color-text-primary)]" : "text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"}`}>{t}</button>
         ))}
       </div>
-      <div className="rounded-2xl overflow-hidden border border-[var(--color-border)]">
+      <div className="rounded-2xl overflow-hidden border border-[var(--color-border)] overflow-x-auto">
         <table className="w-full">
           <thead className="bg-[var(--color-surface-2)]">
             <tr>{["Rank", "Customer", "Membership", "Points"].map(h => <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">{h}</th>)}</tr>

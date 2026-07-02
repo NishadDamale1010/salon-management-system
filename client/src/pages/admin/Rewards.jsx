@@ -32,7 +32,7 @@ export default function Rewards() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div><h1 className="font-display text-2xl font-bold text-[var(--color-text-primary)]">Rewards Management</h1></div>
         <button onClick={() => { setForm({ title: "", description: "", glowPointsRequired: "", discountAmount: "", minimumBill: "", isActive: true }); setModal("create"); }} className="flex items-center gap-2 px-5 py-2.5 -white text-sm font-medium rounded-xl transition-all">
           <Plus className="w-4 h-4" /> Add Reward
@@ -68,7 +68,7 @@ export default function Rewards() {
           <h2 className="font-semibold text-[var(--color-text-primary)] mb-4">Pending Redemptions</h2>
           <div className="space-y-2">
             {redemptions.filter(r => r.status === "Pending").map(r => (
-              <div key={r._id} className="flex items-center justify-between p-4 rounded-xl bg-[var(--color-surface-card)] border border-yellow-500/20">
+              <div key={r._id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-[var(--color-surface-card)] border border-yellow-500/20">
                 <div>
                   <p className="text-sm text-[var(--color-text-primary)] font-medium">{r.user?.firstName} {r.user?.lastName}</p>
                   <p className="text-xs text-[var(--color-text-muted)]">{r.reward?.title}</p>
