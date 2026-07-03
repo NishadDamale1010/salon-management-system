@@ -53,7 +53,7 @@ export default function Home() {
   const [testimRef, testimVis] = useScrollReveal();
 
   const bookLink = isAuthenticated
-    ? (user?.role === "admin" ? "/admin" : "/customer")
+    ? (user?.role === "admin" ? "/admin" : "/book")
     : "/register";
 
   const { data: servicesData } = useQuery({ queryKey: QUERY_KEYS.SERVICES, queryFn: serviceService.getAll });
