@@ -245,24 +245,15 @@ export default function BookAppointment() {
           </div>
         </div>
 
-        {/* Bottom Bar */}
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-xl border-t border-gray-100 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-40">
-          <div className="max-w-xl mx-auto flex items-center justify-between gap-4">
-             <div className="flex flex-col pl-2">
-               <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Total Amount</span>
-               <div className="flex items-baseline gap-1">
-                 <span className="text-xl font-black text-gray-900">₹{totalAmount}</span>
-                 <span className="text-[9px] font-medium text-gray-400 ml-1">(Incl. all taxes)</span>
-               </div>
-             </div>
-             <button
-               onClick={handleBook}
-               disabled={isPending || (paymentMethod === "Manual UPI" && transactionId.trim().length < 3)}
-               className="flex-[1.5] py-4 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-2xl transition-all shadow-lg shadow-rose-500/30 disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
-             >
-               {isPending ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Confirm Booking"} <ChevronRight className="w-4 h-4" />
-             </button>
-          </div>
+        {/* Continue Button Section */}
+        <div className="p-4 mt-6">
+          <button
+            onClick={handleBook}
+            disabled={isPending || (paymentMethod === "Manual UPI" && transactionId.trim().length < 3)}
+            className="w-full py-4 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-[1.2rem] transition-all shadow-[0_8px_20px_rgba(244,63,94,0.3)] disabled:opacity-50 flex items-center justify-center gap-2 text-[14px]"
+          >
+            {isPending ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Confirm Booking"} <ChevronRight className="w-4 h-4" />
+          </button>
         </div>
       </div>
     );
@@ -433,12 +424,9 @@ export default function BookAppointment() {
       {/* Continue Button Section */}
       <div className="p-4 mt-6">
         <div className="bg-white rounded-3xl p-4 shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-gray-100 flex items-center justify-between gap-4">
-           <div className="flex flex-col pl-2">
+           <div className="flex flex-col pl-2 flex-[1.2]">
              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Total Amount</span>
-             <div className="flex items-baseline gap-1">
-               <span className="text-[22px] font-black text-gray-900">₹{totalAmount}</span>
-               <span className="text-[10px] font-medium text-gray-400 ml-1">(Incl. all taxes)</span>
-             </div>
+             <p className="text-[11px] font-bold text-gray-900 mt-0.5 leading-tight">Price will be finalized by owner</p>
            </div>
            <button
              onClick={() => setStep(2)}
