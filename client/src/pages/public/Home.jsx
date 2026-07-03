@@ -3,14 +3,13 @@ import { Link } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import {
   Sparkles, Calendar, Star, Gift,
-  ArrowRight, Video,
-  Clock, ShieldCheck, CheckCircle, Smartphone
+  ArrowRight, Image, Video,
+  Clock, ShieldCheck, CheckCircle, Scissors, Heart, MapPin, CreditCard, User, History, Trophy
 } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
-import { serviceService, inventoryService } from "../../services";
+import { serviceService } from "../../services";
 import { QUERY_KEYS } from "../../constants/queryKeys";
 import ServicesSection from "../../components/home/ServicesSection";
-import FeaturedProductsSection from "../../components/home/FeaturedProductsSection";
 import AIConsultant from "../../components/ai/AIConsultant";
 import LandingChampionBoard from "../../components/home/LandingChampionBoard";
 
@@ -57,97 +56,41 @@ export default function Home() {
     : "/register";
 
   const { data: servicesData } = useQuery({ queryKey: QUERY_KEYS.SERVICES, queryFn: serviceService.getAll });
-  const { data: inventoryData } = useQuery({ queryKey: QUERY_KEYS.INVENTORY, queryFn: inventoryService.getProducts });
-
   return (
     <div className="min-h-screen bg-white pb-20 relative overflow-x-hidden max-w-md mx-auto shadow-2xl md:max-w-6xl md:shadow-none">
 
       <main className="px-4 space-y-8 pt-2">
 
         {/* ════════════════════════════════════════════════════
-            HERO
+            PREMIUM MOBILE HERO — FIRST SCREEN
         ════════════════════════════════════════════════════ */}
-        <section
-          className={`flex flex-row items-center gap-3 md:gap-8 
-                      home-hero-enter ${mounted ? "home-hero-visible" : ""}`}
-        >
+        <section className={`relative -mx-4 min-h-[92vh] overflow-hidden bg-[#fff7fa] home-hero-enter ${mounted ? "home-hero-visible" : ""}`}>
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_16%_12%,rgba(255,255,255,.95),transparent_28%),radial-gradient(circle_at_88%_30%,rgba(255,182,193,.42),transparent_24%),linear-gradient(180deg,#fff_0%,#fff7fa_36%,#fde7ef_100%)]" />
+          <div className="absolute -left-16 top-24 h-44 w-44 rounded-full bg-rose-200/30 blur-3xl" />
+          <div className="absolute -right-20 top-12 h-56 w-56 rounded-full bg-pink-300/25 blur-3xl" />
+          <Sparkles className="absolute right-8 top-8 h-4 w-4 text-rose-300/70 animate-pulse" />
+          <Sparkles className="absolute left-10 top-[52%] h-3 w-3 text-amber-300/80 animate-pulse" style={{ animationDelay: "0.8s" }} />
 
-          {/* ── Hero text ── */}
-          <div className="flex-1 space-y-3 text-left order-1 py-4">
-            <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-rose-50 border border-rose-100 text-rose-600 text-[8px] sm:text-[10px] font-bold shadow-sm">
-              <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-rose-500 animate-pulse" />
-              Gayatri Beauty Studio
-            </div>
-
-            <h1 className="text-xl sm:text-3xl md:text-5xl lg:text-6xl font-display font-black text-gray-900 tracking-tight leading-[1.1]">
-              Your Beauty. <br/>
-              Our Expertise. <br/>
-              <span className="text-rose-500">Timeless You.</span>
-            </h1>
-
-            <p className="text-gray-600 text-[9px] sm:text-xs md:text-base max-w-[160px] sm:max-w-lg font-medium leading-tight">
-              Book your favorite salon services in just a few taps. Earn Glow Points & unlock perks.
-            </p>
-
-            {/* CTAs */}
-            <div className="flex flex-col sm:flex-row gap-2 w-full pt-2">
-              <Link
-                to={bookLink}
-                className="inline-flex items-center justify-center px-3 py-2 sm:px-4 sm:py-2.5
-                           bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-lg sm:rounded-xl
-                           shadow-md active:scale-95 transition-transform text-[9px] sm:text-xs"
-              >
-                Book Appointment
-              </Link>
-            </div>
+          <div className="absolute inset-x-0 top-0 h-[52vh] overflow-hidden">
+            <img src="https://images.unsplash.com/photo-1522338242992-e1a54906a8da?auto=format&fit=crop&w=1200&q=90" alt="Professional beauty model with premium salon makeup" className="h-full w-full object-cover object-[50%_18%] home-hero-portrait" />
+            <div className="absolute inset-0 bg-gradient-to-b from-white/20 via-rose-100/10 to-[#fff7fa]" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#fff7fa] via-[#fff7fa]/46 to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-[#fff7fa] to-transparent" />
           </div>
 
-          {/* ── Hero image ── */}
-          <div className="flex-1 relative w-full max-w-[150px] sm:max-w-[220px] md:max-w-lg mx-auto order-2 mt-2 md:mt-0">
-            {/* Background Pink Circle Blob */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[110%] aspect-square rounded-full bg-gradient-to-tr from-pink-100 to-rose-50 blur-xl" aria-hidden />
+          <HeroBadge className="left-4 top-[18vh]" delay={0.1}><div className="flex items-center gap-2"><Star className="h-4 w-4 fill-amber-400 text-amber-400" /><div><p className="text-[11px] font-black text-gray-950">4.9 Rating</p><p className="text-[9px] font-semibold text-gray-500">500+ happy clients</p></div></div></HeroBadge>
+          <HeroBadge className="right-3 top-[28vh]" delay={0.7}><div className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-rose-500" /><div><p className="text-[11px] font-black text-gray-950">Hygienic & Safe</p><p className="text-[9px] font-semibold text-gray-500">Verified salon</p></div></div></HeroBadge>
+          <HeroBadge className="left-7 top-[39vh]" delay={1.1}><div className="flex items-center gap-2"><Gift className="h-4 w-4 text-rose-500" /><div><p className="text-[11px] font-black text-gray-950">Glow Points</p><p className="text-[9px] font-semibold text-gray-500">Rewards every visit</p></div></div></HeroBadge>
 
-            {/* image frame */}
-            <div className="relative z-10 flex justify-center">
-              <img src="/hero-girl.png" alt="Gayatri Beauty Studio" className="w-[140px] sm:w-[220px] h-auto drop-shadow-xl mix-blend-multiply" style={{ objectFit: 'contain' }} />
+          <div className="relative z-10 flex min-h-[92vh] flex-col justify-end px-5 pb-5 pt-[45vh]">
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/70 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.22em] text-rose-600 shadow-[0_12px_32px_rgba(190,24,93,.10)] backdrop-blur-xl"><span className="h-1.5 w-1.5 rounded-full bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,.8)]" />Gayatri Beauty Studio</div>
+              <div><h1 className="font-display text-[3.45rem] font-black leading-[0.86] tracking-[-0.08em] text-gray-950">Your Beauty.<br /><span className="text-gradient-rose">Our Expertise.</span><br />Timeless You.</h1><p className="mt-4 max-w-[21rem] text-[13px] font-medium leading-5 text-gray-600">Book your favorite salon services in a few taps. Earn Glow Points, unlock rewards, and look beautiful.</p></div>
+              <div className="grid grid-cols-[1fr_auto] gap-3"><Link to={bookLink} className="group inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600 px-5 text-sm font-black text-white shadow-[0_18px_42px_rgba(244,63,94,.34)] transition duration-300 active:scale-[.98]">Book Appointment <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" /></Link><Link to="/gallery" className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl border border-white/80 bg-white/70 px-4 text-xs font-black text-gray-900 shadow-[0_14px_36px_rgba(190,24,93,.10)] backdrop-blur-xl transition active:scale-[.98]"><Image className="h-4 w-4 text-rose-500" /> View Our Work</Link></div>
+              <div className="grid grid-cols-3 gap-2">{[{value:"5+",label:"Years"},{value:"500+",label:"Clients"},{value:"Verified",label:"Salon"}].map((stat) => (<div key={stat.label} className="rounded-2xl border border-white/75 bg-white/60 p-3 text-center shadow-[0_12px_30px_rgba(190,24,93,.08)] backdrop-blur-xl"><p className="font-display text-lg font-black text-gray-950">{stat.value}</p><p className="text-[9px] font-bold uppercase tracking-[0.12em] text-gray-500">{stat.label}</p></div>))}</div>
+              <div className="grid grid-cols-5 gap-2">{[{ icon: Calendar, title: "Booking" }, { icon: Scissors, title: "Services" }, { icon: Gift, title: "Offers" }, { icon: Trophy, title: "Points" }, { icon: Image, title: "Gallery" }, { icon: Heart, title: "Favorites" }, { icon: MapPin, title: "Nearby" }, { icon: History, title: "History" }, { icon: CreditCard, title: "Pay" }, { icon: User, title: "Profile" }].map((feat) => (<div key={feat.title} className="rounded-2xl border border-white/75 bg-white/65 p-2.5 text-center shadow-[0_10px_28px_rgba(190,24,93,.07)] backdrop-blur-xl transition hover:-translate-y-0.5"><feat.icon className="mx-auto mb-1 h-4 w-4 text-rose-500" /><p className="text-[9px] font-black text-gray-800">{feat.title}</p></div>))}</div>
+              <div className="grid grid-cols-3 gap-3">{[{ title: "Hair", img: "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=500&q=80" }, { title: "Skin", img: "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=500&q=80" }, { title: "Bridal", img: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=500&q=80" }].map((service) => (<Link to="/services" key={service.title} className="group relative h-24 overflow-hidden rounded-3xl shadow-[0_16px_36px_rgba(190,24,93,.16)]"><img src={service.img} alt={`${service.title} service`} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" /><div className="absolute inset-0 bg-gradient-to-t from-gray-950/55 via-transparent to-transparent" /><p className="absolute bottom-3 left-3 font-display text-lg font-black text-white">{service.title}</p></Link>))}</div>
             </div>
-
-            {/* rating badge */}
-            <HeroBadge className="-left-4 top-1/4 scale-[0.6] origin-left" delay={0}>
-              <div className="flex flex-col items-center gap-0.5">
-                <div className="flex items-center gap-1 text-sm font-black text-gray-900">
-                  <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-                  4.9/5
-                </div>
-                <div className="text-[9px] font-bold text-amber-500">2.8k+ Reviews</div>
-              </div>
-            </HeroBadge>
-
-            {/* Hygienic badge */}
-            <HeroBadge className="-right-6 top-4 scale-[0.6] origin-right" delay={1.2}>
-               <div className="flex items-center gap-2">
-                 <div className="w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center text-rose-500">
-                    <ShieldCheck className="w-4 h-4" />
-                 </div>
-                 <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-gray-900">Hygienic & Safe</span>
-                    <span className="text-[8px] text-gray-500">Your safety is our priority</span>
-                 </div>
-               </div>
-            </HeroBadge>
-
-            {/* New Here badge */}
-            <HeroBadge className="-right-4 bottom-4 scale-[0.6] origin-right" delay={0.5}>
-               <div className="flex items-center gap-2">
-                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-400 to-rose-600 flex items-center justify-center text-white">
-                    <Gift className="w-5 h-5" />
-                 </div>
-                 <div className="flex flex-col">
-                    <span className="text-[11px] font-bold text-gray-900">New Here?</span>
-                    <span className="text-[8px] text-gray-500 max-w-[100px] leading-tight">Create an account and get 50 Glow Points!</span>
-                 </div>
-               </div>
-            </HeroBadge>
           </div>
         </section>
 

@@ -373,3 +373,16 @@ body {
     animation: none;
   }
 }
+.home-hero-portrait {
+  animation: premiumHeroZoom 16s ease-in-out infinite alternate;
+  filter: saturate(1.04) contrast(1.02);
+}
+
+@keyframes premiumHeroZoom {
+  from { transform: scale(1); }
+  to { transform: scale(1.065); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-hero-portrait { animation: none; }
+}
