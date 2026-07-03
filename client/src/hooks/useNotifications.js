@@ -141,7 +141,7 @@ export const useNotifications = () => {
 
             if (permission === "denied") return;
 
-            const shouldRequestPermission = permission === "granted" || isManual;
+            const shouldRequestPermission = true;
             const token = await requestFirebaseNotificationPermission({
                 requestPermission: shouldRequestPermission,
             });
