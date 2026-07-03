@@ -14,35 +14,7 @@ import { useAuthStore } from "../../store/authStore";
 import ProductImage from "../../components/products/ProductImage";
 import AIConsultant from "../../components/ai/AIConsultant";
 
-// ==================== NUMBER COUNTER ====================
-function CountUp({ end, suffix = "", duration = 2000 }) {
-  const [count, setCount] = useState(0);
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-50px" });
 
-  useEffect(() => {
-    if (!isInView) return;
-    let startTimestamp = null;
-    const target = parseInt(end.replace(/[^0-9]/g, ''));
-    if (isNaN(target)) { setCount(end); return; }
-
-    const step = (timestamp) => {
-      if (!startTimestamp) startTimestamp = timestamp;
-      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-      // easeOutExpo
-      const easeProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
-      setCount(Math.floor(easeProgress * target));
-      if (progress < 1) {
-        window.requestAnimationFrame(step);
-      } else {
-        setCount(target);
-      }
-    };
-    window.requestAnimationFrame(step);
-  }, [isInView, end, duration]);
-
-  return <span ref={ref}>{count}{suffix}</span>;
-}
 
 // ==================== HERO ====================
 function HeroSection({ settings, bookLink, isAuthenticated }) {
