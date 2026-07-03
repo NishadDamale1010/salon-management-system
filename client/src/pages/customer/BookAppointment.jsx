@@ -111,8 +111,12 @@ export default function BookAppointment() {
   };
 
   const handleBook = () => {
+    const regularServiceIds = selectedServices.filter(s => s._id !== 'custom').map(s => s._id);
+    const customServices = selectedServices.some(s => s._id === 'custom') ? ["Custom Request"] : [];
+
     book({
-      serviceIds: selectedServices.map(s => s._id),
+      serviceIds: regularServiceIds,
+      customServices: customServices,
       appointmentDate: date,
       appointmentTime: time,
       notes,
@@ -137,11 +141,6 @@ export default function BookAppointment() {
           <p className="text-sm text-gray-500">Date: <span className="text-gray-900 font-medium">{booked.appointmentDate}</span></p>
           <p className="text-sm text-gray-500">Time: <span className="text-gray-900 font-medium">{booked.appointmentTime}</span></p>
           <p className="text-sm text-gray-500">Status: <span className="text-amber-500 font-bold">Pending confirmation</span></p>
-          
-          <div className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-2 text-rose-500 bg-rose-50 p-3 rounded-2xl">
-            <Sparkles className="w-5 h-5" /> 
-            <span className="text-sm font-bold">You'll earn {glowPointsFromAmount(booked.totalAmount || totalAmount)} Glow Points</span>
-          </div>
         </div>
         <button onClick={() => navigate("/appointments")} className="w-full py-4 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-2xl transition-all shadow-lg shadow-rose-500/30">
           View My Appointments
@@ -317,7 +316,7 @@ export default function BookAppointment() {
               <button className="text-[11px] font-bold text-rose-500 flex items-center hover:text-rose-600">View All Services <ChevronRight className="w-3.5 h-3.5 ml-0.5" /></button>
            </div>
            <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide snap-x snap-mandatory">
-              {services.map(svc => {
+              {[...services, { _id: 'custom', name: 'Custom Request', duration: 30, price: 0, image: 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?auto=format&fit=crop&q=80' }].map(svc => {
                 const isSelected = selectedServices.some(s => s._id === svc._id);
                 return (
                   <button 
@@ -338,7 +337,7 @@ export default function BookAppointment() {
                     </div>
                     <div className="px-2 pb-2">
                       <h3 className="font-bold text-[13px] text-gray-900 leading-tight mb-1 truncate">{svc.name}</h3>
-                      <p className="text-[10px] text-gray-500">{svc.duration} min</p>
+                      <p className="text-[10px] text-gray-500">{svc._id === 'custom' ? 'Variable' : `${svc.duration} min`}</p>
                     </div>
                   </button>
                 )
@@ -425,19 +424,15 @@ export default function BookAppointment() {
                      </div>
                   </div>
                   
-                  <div className="p-3 bg-rose-50 rounded-2xl border border-rose-100/50 flex items-center gap-2">
-                     <div className="bg-white p-1.5 rounded-full shadow-sm text-rose-500"><Sparkles className="w-3.5 h-3.5" /></div>
-                     <p className="text-[11px] text-gray-700 font-medium">You will earn <span className="text-rose-600 font-bold">{glowPointsFromAmount(totalAmount)} Glow Points</span> on this booking!</p>
-                  </div>
                </div>
             </motion.section>
           )}
         </AnimatePresence>
       </div>
 
-      {/* Sticky Bottom Bar */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-xl border-t border-gray-100 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-40">
-        <div className="max-w-xl mx-auto flex items-center justify-between gap-4">
+      {/* Continue Button Section */}
+      <div className="p-4 mt-6">
+        <div className="bg-white rounded-3xl p-4 shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-gray-100 flex items-center justify-between gap-4">
            <div className="flex flex-col pl-2">
              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Total Amount</span>
              <div className="flex items-baseline gap-1">
