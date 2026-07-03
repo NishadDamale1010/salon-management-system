@@ -37,9 +37,6 @@ const buildFcmMessage = (tokens, title, body, options = {}) => {
         },
         data,
         webpush: {
-            fcmOptions: {
-                link: route
-            },
             notification: {
                 title,
                 body,
