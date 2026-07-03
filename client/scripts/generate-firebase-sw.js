@@ -44,31 +44,17 @@ importScripts("https://www.gstatic.com/firebasejs/10.9.0/firebase-messaging-comp
 
 const firebaseConfig = ${JSON.stringify(firebaseConfig, null, 4)};
 
-if (firebaseConfig.apiKey) {
-    firebase.initializeApp(firebaseConfig);
-    const messaging = firebase.messaging();
-
-    messaging.onBackgroundMessage((payload) => {
-        console.log("[firebase-messaging-sw.js] Received background message ", payload);
-
-        const notificationTitle = payload.notification?.title || payload.data?.title || "New Notification";
-        const notificationOptions = {
-            body: payload.notification?.body || payload.data?.body,
-            icon: payload.notification?.image || "/favicon.png",
-            badge: "/favicon.png",
-            data: payload.data || {},
-            vibrate: [100, 50, 100],
-            requireInteraction: false,
-        };
-
-        self.registration.showNotification(notificationTitle, notificationOptions);
-    });
-}
-
+// 1. Register our click listener FIRST so Firebase doesn't stop it
 self.addEventListener("notificationclick", (event) => {
     event.notification.close();
 
-    const route = event.notification.data?.route || "/";
+    // Firebase natively handles 'webpush.notification' by wrapping data in FCM_MSG
+    let payloadData = event.notification.data || {};
+    if (payloadData.FCM_MSG && payloadData.FCM_MSG.data) {
+        payloadData = payloadData.FCM_MSG.data;
+    }
+
+    const route = payloadData.route || "/";
     const urlToOpen = new URL(route, self.location.origin).href;
 
     event.waitUntil(
@@ -89,6 +75,27 @@ self.addEventListener("notificationclick", (event) => {
         })
     );
 });
+
+if (firebaseConfig.apiKey) {
+    firebase.initializeApp(firebaseConfig);
+    const messaging = firebase.messaging();
+
+    messaging.onBackgroundMessage((payload) => {
+        console.log("[firebase-messaging-sw.js] Received background message ", payload);
+
+        const notificationTitle = payload.notification?.title || payload.data?.title || "New Notification";
+        const notificationOptions = {
+            body: payload.notification?.body || payload.data?.body,
+            icon: payload.notification?.image || "/favicon.png",
+            badge: "/favicon.png",
+            data: payload.data || {},
+            vibrate: [100, 50, 100],
+            requireInteraction: false,
+        };
+
+        self.registration.showNotification(notificationTitle, notificationOptions);
+    });
+}
 `;
 
 const outputPath = path.join(rootDir, "public", "firebase-messaging-sw.js");
